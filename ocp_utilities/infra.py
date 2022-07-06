@@ -20,6 +20,7 @@ def validate_nodes_ready(nodes):
     Raises:
         AssertionError: Assert on node(s) in not ready state
     """
+    LOGGER.info("Verify all nodes are ready.")
     not_ready_nodes = [node.name for node in nodes if not node.kubelet_ready]
     if not_ready_nodes:
         raise ClusterSanityError(
@@ -37,6 +38,7 @@ def validate_nodes_schedulable(nodes):
     Raises:
         AssertionError: Asserts on node(s) not schedulable
     """
+    LOGGER.info("Verify all nodes are schedulable.")
     unschedulable_nodes = [
         node.name for node in nodes if node.instance.spec.unschedulable
     ]
