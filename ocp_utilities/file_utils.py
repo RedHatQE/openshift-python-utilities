@@ -1,6 +1,8 @@
+import logging
 import os
 
-from ocp_utilities.infra import LOGGER
+
+LOGGER = logging.getLogger(__name__)
 
 
 def write_to_extras_file(extras_file_name, content, extra_dir_name="extras"):

@@ -1,6 +1,6 @@
 import pytest as pytest
 
-from ocp_utilities.helpers.test_utils import write_to_extras_file
+from ocp_utilities.file_utils import write_to_extras_file
 
 
 def exit_pytest_execution(
