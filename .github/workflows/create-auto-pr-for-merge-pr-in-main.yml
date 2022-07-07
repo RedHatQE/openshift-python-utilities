@@ -12,7 +12,7 @@ jobs:
       uses: actions/checkout@main
     - name: Trust GitHub workspace
       run:
-        git config --global --add safe.directory '/github/workspace'
+        git config --global --add safe.directory /github/workspace
     - name: Create PR to branch
       uses: gorillio/github-action-cherry-pick@master
       with:
