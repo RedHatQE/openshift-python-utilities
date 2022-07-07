@@ -1,5 +1,5 @@
 import logging
-import os
+import shutil
 from logging.handlers import RotatingFileHandler
 
 from colorlog import ColoredFormatter
@@ -26,13 +26,20 @@ class DuplicateFilter(logging.Filter):
         return False
 
 
-def get_logger(name):
-    log_level = os.environ.get("OPENSHIFT_PYTHON_WRAPPER_LOG_LEVEL", "INFO")
-    log_file = os.environ.get("OPENSHIFT_PYTHON_WRAPPER_LOG_FILE", "")
-    if log_level not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
-        raise ValueError(f"Invalid log level: {log_level}")
+def separator(symbol_, val=None):
+    terminal_width = shutil.get_terminal_size(fallback=(120, 40))[0]
+    if not val:
+        return f"{symbol_ * terminal_width}"
 
-    logger_obj = logging.getLogger(name)
+    sepa = int((terminal_width - len(val) - 2) // 2)
+    return f"{symbol_ * sepa} {val} {symbol_ * sepa}"
+
+
+def setup_logging(log_level, log_file="/tmp/pytest-tests.log"):
+    logger_obj = logging.getLogger()
+    basic_logger = logging.getLogger("basic")
+
+    root_log_formatter = logging.Formatter(fmt="%(message)s")
     log_formatter = ColoredFormatter(
         fmt="%(name)s %(asctime)s %(log_color)s%(levelname) s%(reset)s %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
@@ -47,20 +54,29 @@ def get_logger(name):
     )
 
     console_handler = logging.StreamHandler()
+    log_handler = RotatingFileHandler(
+        filename=log_file, maxBytes=100 * 1024 * 1024, backupCount=20
+    )
+    basic_console_handler = logging.StreamHandler()
+    basic_log_handler = RotatingFileHandler(
+        filename=log_file, maxBytes=100 * 1024 * 1024, backupCount=20
+    )
+
+    basic_log_handler.setFormatter(fmt=root_log_formatter)
+    basic_console_handler.setFormatter(fmt=root_log_formatter)
+    basic_logger.addHandler(hdlr=basic_log_handler)
+    basic_logger.addHandler(hdlr=basic_console_handler)
+    basic_logger.setLevel(level=log_level)
+
+    log_handler.setFormatter(fmt=log_formatter)
     console_handler.setFormatter(fmt=log_formatter)
-    console_handler.addFilter(filter=DuplicateFilter())
 
     logger_obj.addHandler(hdlr=console_handler)
+    logger_obj.addHandler(hdlr=log_handler)
     logger_obj.setLevel(level=log_level)
-    logger_obj.addFilter(filter=DuplicateFilter())
 
-    if log_file:
-        log_handler = RotatingFileHandler(
-            filename=log_file, maxBytes=100 * 1024 * 1024, backupCount=20
-        )
-        log_handler.setFormatter(fmt=log_formatter)
-        log_handler.setLevel(level=log_level)
-        logger_obj.addHandler(hdlr=log_handler)
+    logger_obj.addFilter(filter=DuplicateFilter())
+    console_handler.addFilter(filter=DuplicateFilter())
 
     logger_obj.propagate = False
-    return logger_obj
+    basic_logger.propagate = False
