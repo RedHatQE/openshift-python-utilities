@@ -14,10 +14,11 @@ def create_must_gather_command(
     image_url,
     script_name=None,
     kubeconfig=None,
+    skip_tls_check=False,
 ):
     base_command = (
-        f"oc adm must-gather {f'--kubeconfig {kubeconfig}' if kubeconfig else ''} --image={image_url}"
-        f" --dest-dir={dest_dir}"
+        f"oc adm must-gather {f'--insecure-skip-tls-verify' if skip_tls_check else ''} "
+        f"{f'--kubeconfig {kubeconfig}' if kubeconfig else ''} --image={image_url} --dest-dir={dest_dir}"
     )
     return f"{base_command} -- {script_name}" if script_name else base_command
 
