@@ -28,7 +28,9 @@ def run_cnv_must_gather(must_gather_cmd):
     return run_command(command=shlex.split(must_gather_cmd))[1]
 
 
-def save_must_gather_logs(target_base_dir, must_gather_image_url, kubeconfig=None):
+def save_must_gather_logs(
+    target_base_dir, must_gather_image_url, kubeconfig=None, skip_tls_check=False
+):
     logs_path = os.path.join(
         target_base_dir,
         f"must_gather_{datetime.datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S')}",
@@ -38,5 +40,6 @@ def save_must_gather_logs(target_base_dir, must_gather_image_url, kubeconfig=Non
         image_url=must_gather_image_url,
         dest_dir=logs_path,
         kubeconfig=kubeconfig,
+        skip_tls_check=skip_tls_check,
     )
     return run_cnv_must_gather(must_gather_cmd=must_gather_command)
