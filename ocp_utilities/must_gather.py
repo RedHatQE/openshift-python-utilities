@@ -11,7 +11,7 @@ LOGGER = logging.getLogger(__name__)
 
 def create_must_gather_command(
     dest_dir,
-    image_url,
+    image_url=None,
     script_name=None,
     kubeconfig=None,
     skip_tls_check=False,
