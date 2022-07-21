@@ -14,11 +14,10 @@ def create_must_gather_command(
     image_url=None,
     script_name=None,
     kubeconfig=None,
-    skip_tls_check=False,
 ):
     base_command = (
-        f"oc adm must-gather {f'--insecure-skip-tls-verify' if skip_tls_check else ''} "
-        f"{f'--kubeconfig {kubeconfig}' if kubeconfig else ''} --image={image_url} --dest-dir={dest_dir}"
+        f"oc adm must-gather {f'--kubeconfig {kubeconfig}' if kubeconfig else ''}"
+        f" {f'--image={image_url}' if image_url else ''} --dest-dir={dest_dir}"
     )
     return f"{base_command} -- {script_name}" if script_name else base_command
 
@@ -28,9 +27,7 @@ def run_cnv_must_gather(must_gather_cmd):
     return run_command(command=shlex.split(must_gather_cmd))[1]
 
 
-def save_must_gather_logs(
-    target_base_dir, must_gather_image_url, kubeconfig=None, skip_tls_check=False
-):
+def save_must_gather_logs(target_base_dir, must_gather_image_url, kubeconfig=None):
     logs_path = os.path.join(
         target_base_dir,
         f"must_gather_{datetime.datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S')}",
@@ -40,6 +37,5 @@ def save_must_gather_logs(
         image_url=must_gather_image_url,
         dest_dir=logs_path,
         kubeconfig=kubeconfig,
-        skip_tls_check=skip_tls_check,
     )
     return run_cnv_must_gather(must_gather_cmd=must_gather_command)
