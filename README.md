@@ -1,5 +1,6 @@
-### TODO
-This repo is still WIP.
+# openshift-python-utilities
+Pypi: [openshift-python-utilities](https://pypi.org/project/openshift-python-utilities/)  
+A utilities repository for [openshift-restclient-python](https://github.com/openshift/openshift-restclient-python)
 
 ## Release new version
 ### requirements:
