@@ -22,3 +22,16 @@ git checkout v4.11
 git pull
 release-it # Follow the instructions
 ```
+
+To enable data-collector pass data-collector.yaml
+YAML format:
+```yaml
+    data_collector_base_directory: "<base directory for data collection>"
+    collect_data_function: "<import path for data collection method>"
+```
+YAML Example:
+```yaml
+    data_collector_base_directory: "tests-collected-info"
+    collect_data_function: "utilities.data_collector.collect_data"
+```
+Either export path to yaml file in `OPENSHIFT_PYTHON_WRAPPER_DATA_COLLECTOR_YAML` or set `data_collector` in your py_config 

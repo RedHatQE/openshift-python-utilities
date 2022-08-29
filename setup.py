@@ -14,6 +14,7 @@ setup(
         "openshift",
         "colorlog",
         "pytest",
+        "PyYAML"
     ],
     python_requires=">=3.6",
 )
