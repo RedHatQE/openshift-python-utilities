@@ -9,8 +9,7 @@ from ocp_resources.service import Service
 from ocp_resources.virtual_machine import VirtualMachine
 from pytest_testconfig import config as py_config
 
-import utilities.infra
-from utilities.constants import MACHINE_CONFIG_PODS_TO_COLLECT, PODS_TO_COLLECT_INFO
+import infra
 
 
 LOGGER = logging.getLogger(__name__)
@@ -84,7 +83,7 @@ def prepare_test_data_dir(item, prefix, logs_path=None):
 
 
 def collect_resources_yaml_instance(resources_to_collect, namespace_name=None):
-    get_kwargs = {"dyn_client": utilities.infra.get_admin_client()}
+    get_kwargs = {"dyn_client": infra.get_admin_client()}
     for _resources in resources_to_collect:
         if _resources == Service:
             get_kwargs["namespace"] = namespace_name
@@ -102,15 +101,14 @@ def collect_resources_yaml_instance(resources_to_collect, namespace_name=None):
                 )
 
 
-def collect_pods_data(pods, pod_list=None):
-    pod_list = pod_list or PODS_TO_COLLECT_INFO
+def collect_pods_data(pods, pod_list=None, pods_prefix=None):
     for pod in pods:
         kwargs = {}
         for pod_prefix in pod_list:
             if pod.name.startswith(pod_prefix):
                 if pod_prefix == "virt-launcher":
                     kwargs = {"container": "compute"}
-                if pod_prefix in MACHINE_CONFIG_PODS_TO_COLLECT:
+                if pods_prefix and pod_prefix in pods_prefix:
                     kwargs = {"container": pod_prefix}
 
                 write_to_file(
