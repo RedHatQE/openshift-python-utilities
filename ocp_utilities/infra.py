@@ -1,8 +1,9 @@
 import importlib
-import os
 
-import yaml
-
+from ocp_utilities.data_collector import (
+    get_data_collector_base_dir,
+    get_data_collector_dict,
+)
 from ocp_utilities.exceptions import NodeNotReadyError, NodeUnschedulableError
 from ocp_utilities.logger import get_logger
 
@@ -65,42 +66,25 @@ class DynamicClassCreator:
                 super().__init__(*args, **kwargs)
 
             @staticmethod
-            def _set_cnv_tests_label(res):
+            def _set_dynamic_class_creator_label(res):
                 res.setdefault("metadata", {}).setdefault("labels", {}).update(
-                    {"created-by-cnv-tests": "Yes"}
+                    {"created-by-dynamic-class-creator": "Yes"}
                 )
                 return res
 
             def to_dict(self):
                 res = super().to_dict()
-                self._set_cnv_tests_label(res=res)
+                self._set_dynamic_class_creator_label(res=res)
                 return res
 
             def clean_up(self):
-                data_collect_yaml = os.environ.get(
-                    "OPENSHIFT_PYTHON_WRAPPER_DATA_COLLECTOR_YAML"
-                )
-                if data_collect_yaml:
-                    with open(data_collect_yaml, "r") as fd:
-                        data_collector_dict = yaml.safe_load(fd.read())
-                else:
-                    try:
-                        from pytest_testconfig import py_config
-
-                        data_collector_dict = py_config.get("data_collector")
-                    except ImportError:
-                        data_collector_dict = None
-
-                if data_collector_dict:
-                    try:
-                        directory = os.path.join(
-                            data_collector_dict.get(
-                                "collector_directory",
-                                data_collector_dict["data_collector_base_directory"],
-                            ),
-                            self.kind,
-                            self.name,
+                try:
+                    data_collector_dict = get_data_collector_dict()
+                    if data_collector_dict:
+                        data_collector_directory = get_data_collector_base_dir(
+                            data_collector_dict=data_collector_dict
                         )
+
                         collect_data_function = data_collector_dict[
                             "collect_data_function"
                         ]
@@ -112,12 +96,18 @@ class DynamicClassCreator:
                         LOGGER.info(
                             f"[Data collector] Collecting data for {self.kind} {self.name}"
                         )
-                        collect_data_function(directory=directory, resource_object=self, collect_pod_logs=data_collector_dict["collect_pod_logs"])
-                    except Exception as exception_:
-                        LOGGER.warning(
-                            f"[Data collector] failed to collect data for {self.kind} {self.name}\n"
-                            f"exception: {exception_}"
+                        collect_data_function(
+                            directory=data_collector_directory,
+                            resource_object=self,
+                            collect_pod_logs=data_collector_dict.get(
+                                "collect_pod_logs", False
+                            ),
                         )
+                except Exception as exception_:
+                    LOGGER.warning(
+                        f"[Data collector] failed to collect data for {self.kind} {self.name}\n"
+                        f"exception: {exception_}"
+                    )
                 super().clean_up()
 
         self.created_classes[base_class] = BaseResource
