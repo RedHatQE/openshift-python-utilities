@@ -112,7 +112,7 @@ class DynamicClassCreator:
                         LOGGER.info(
                             f"[Data collector] Collecting data for {self.kind} {self.name}"
                         )
-                        collect_data_function(directory=directory, resource_object=self)
+                        collect_data_function(directory=directory, resource_object=self, collect_pod_logs=data_collector_dict["collect_pod_logs"])
                     except Exception as exception_:
                         LOGGER.warning(
                             f"[Data collector] failed to collect data for {self.kind} {self.name}\n"

@@ -50,7 +50,7 @@ def collect_data_volume_data(dyn_client, directory=None):
             )
 
 
-def collect_data(directory, resource_object):
+def collect_data(directory, resource_object, collect_pod_logs):
     LOGGER.info(f"Collecting instance data for {resource_object.name}")
 
     if resource_object.kind == ProjectRequest.kind:
@@ -66,6 +66,13 @@ def collect_data(directory, resource_object):
 
     if resource_object.kind == DataVolume.kind:
         collect_data_volume_data(dyn_client=resource_object.client, directory=directory)
+
+    if resource_object.kind == Pod.kind and collect_pod_logs:
+        write_to_file(
+                file_name=f"{resource_object.name}.log",
+                content=resource_object.log(),
+                extra_dir_name=resource_object.kind,
+        )
 
 
 def prepare_test_data_dir(item, prefix, logs_path=None):
