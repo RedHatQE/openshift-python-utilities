@@ -18,7 +18,7 @@ def run_command(command, verify_stderr=True, shell=False):
     Returns:
         tuple: True, out if command succeeded, False, err otherwise.
     """
-    LOGGER.info(f"Running {command} command")
+    LOGGER.info(f"Running {' '.join(command)} command")
     sub_process = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
