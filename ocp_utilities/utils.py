@@ -1,12 +1,12 @@
 import subprocess
 
-from utilities.constants import TIMEOUT_30MIN
-
 from ocp_utilities.exceptions import CommandExecFailed
 from ocp_utilities.logger import get_logger
 
 
 LOGGER = get_logger(name=__name__)
+
+TIMEOUT_30MIN = 30 * 60
 
 
 def run_command(command, verify_stderr=True, shell=False):
