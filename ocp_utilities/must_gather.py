@@ -44,5 +44,5 @@ def run_must_gather(
     # flag_name must be the last argument
     if flag_names:
         flag_string = "".join([f" --{flag_name}" for flag_name in flag_names])
-        base_command += f" {''.join(flag_string)}"
+        base_command += f" {flag_string}"
     return run_command(command=shlex.split(base_command))[1]
