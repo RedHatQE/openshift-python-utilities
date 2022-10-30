@@ -25,7 +25,7 @@ def run_must_gather(
         kubeconfig (str, optional): path to kubeconfig
         skip_tls_check (bool, default: False): if True, skip tls check
         script_name (str, optional): must-gather script name or path
-        flag_names (list, optional): must-gather flag names
+        flag_names (list, optional): list of must-gather flags
 
     Returns:
         str: command output
@@ -43,6 +43,6 @@ def run_must_gather(
         base_command += f" -- {script_name}"
     # flag_name must be the last argument
     if flag_names:
-        flag_string = [f" --{flag_name}" for flag_name in flag_names]
+        flag_string = "".join([f" --{flag_name}" for flag_name in flag_names])
         base_command += f" {''.join(flag_string)}"
     return run_command(command=shlex.split(base_command))[1]
