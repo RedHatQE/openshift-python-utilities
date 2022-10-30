@@ -13,6 +13,7 @@ def run_must_gather(
     kubeconfig=None,
     skip_tls_check=False,
     script_name=None,
+    flag_name=None,
 ):
     """
     Run must gather command with an option to create target directory.
@@ -24,6 +25,7 @@ def run_must_gather(
         kubeconfig (str, optional): path to kubeconfig
         skip_tls_check (bool, default: False): if True, skip tls check
         script_name (str, optional): must-gather script name or path
+        flag_name (str, optional): must-gather flag name
 
     Returns:
         str: command output
@@ -37,8 +39,9 @@ def run_must_gather(
         base_command += " --insecure-skip-tls-verify"
     if kubeconfig:
         base_command += f" --kubeconfig {kubeconfig}"
-    # script_name must be the last argument
     if script_name:
         base_command += f" -- {script_name}"
-
+    # flag_name must be the last argument
+    if flag_name:
+        base_command += f" --{flag_name}"
     return run_command(command=shlex.split(base_command))[1]
