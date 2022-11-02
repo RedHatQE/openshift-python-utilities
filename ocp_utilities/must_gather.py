@@ -26,6 +26,10 @@ def run_must_gather(
         skip_tls_check (bool, default: False): if True, skip tls check
         script_name (str, optional): must-gather script name or path
         flag_names (list, optional): list of must-gather flags
+            Examples: "oc adm must-gather --image=quay.io/kubevirt/must-gather -- /usr/bin/gather --default"
+
+            Note: flag is optional parameter for must-gather. When it is not passed "--default" flag is used by
+            must-gather. However, flag_names can not be passed without script_name
 
     Returns:
         str: command output
