@@ -13,6 +13,7 @@ def run_must_gather(
     kubeconfig=None,
     skip_tls_check=False,
     script_name=None,
+    flag_names=None,
 ):
     """
     Run must gather command with an option to create target directory.
@@ -24,6 +25,11 @@ def run_must_gather(
         kubeconfig (str, optional): path to kubeconfig
         skip_tls_check (bool, default: False): if True, skip tls check
         script_name (str, optional): must-gather script name or path
+        flag_names (list, optional): list of must-gather flags
+            Examples: "oc adm must-gather --image=quay.io/kubevirt/must-gather -- /usr/bin/gather --default"
+
+            Note: flag is optional parameter for must-gather. When it is not passed "--default" flag is used by
+            must-gather. However, flag_names can not be passed without script_name
 
     Returns:
         str: command output
@@ -37,8 +43,10 @@ def run_must_gather(
         base_command += " --insecure-skip-tls-verify"
     if kubeconfig:
         base_command += f" --kubeconfig {kubeconfig}"
-    # script_name must be the last argument
     if script_name:
         base_command += f" -- {script_name}"
-
+    # flag_name must be the last argument
+    if flag_names:
+        flag_string = "".join([f" --{flag_name}" for flag_name in flag_names])
+        base_command += f" {flag_string}"
     return run_command(command=shlex.split(base_command))[1]
