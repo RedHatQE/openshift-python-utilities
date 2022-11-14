@@ -65,17 +65,16 @@ class DynamicClassCreator:
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)
 
-            @staticmethod
-            def _set_dynamic_class_creator_label(res):
-                res.setdefault("metadata", {}).setdefault("labels", {}).update(
+            def _set_dynamic_class_creator_label(self):
+                self.res.setdefault("metadata", {}).setdefault("labels", {}).update(
                     {"created-by-dynamic-class-creator": "Yes"}
                 )
-                return res
 
             def to_dict(self):
-                res = super().to_dict()
-                self._set_dynamic_class_creator_label(res=res)
-                return res
+                if not self.res:
+                    super().to_dict()
+
+                self._set_dynamic_class_creator_label()
 
             def clean_up(self):
                 try:
