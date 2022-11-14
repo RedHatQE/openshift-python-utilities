@@ -1,0 +1,6 @@
+openshift
+colorlog
+pytest
+pytest-testconfig
+PyYAML
+web-pdb
