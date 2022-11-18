@@ -6,6 +6,14 @@ class NodeUnschedulableError(Exception):
     pass
 
 
+class PodsHealthCheckError(Exception):
+    pass
+
+
+class PodsFailedOrPendingError(Exception):
+    pass
+
+
 class CommandExecFailed(Exception):
     def __init__(self, name, err=None):
         self.name = name

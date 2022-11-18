@@ -4,7 +4,11 @@ from ocp_utilities.data_collector import (
     get_data_collector_base_dir,
     get_data_collector_dict,
 )
-from ocp_utilities.exceptions import NodeNotReadyError, NodeUnschedulableError
+from ocp_utilities.exceptions import (
+    NodeNotReadyError,
+    NodeUnschedulableError,
+    PodsFailedOrPendingError,
+)
 from ocp_utilities.logger import get_logger
 
 
@@ -46,6 +50,30 @@ def assert_nodes_schedulable(nodes):
     if unschedulable_nodes:
         raise NodeUnschedulableError(
             f"Following nodes are in unscheduled state: {unschedulable_nodes}"
+        )
+
+
+def assert_pods_failed_or_pending(pods: list) -> None:
+    """
+    Validates all pods and flag failed or pending pods
+
+    Args:
+         pods: List of pod objects
+
+    Raises:
+        PodsFailedOrPendingError, if there are failed or pending pods
+    """
+    LOGGER.info("Verify all pods are not failed nor pending.")
+
+    failed_or_pending_pods = []
+    for pod in pods:
+
+        if pod.exists and pod.instance.status.phase in ["Failed", "Pending"]:
+            f"{pod.name} is {pod.instance.status.phase}"
+
+    if failed_or_pending_pods:
+        raise PodsFailedOrPendingError(
+            f"The following pods are failed or pending: {failed_or_pending_pods}"
         )
 
 
