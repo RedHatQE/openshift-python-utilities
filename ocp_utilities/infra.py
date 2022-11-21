@@ -53,7 +53,7 @@ def assert_nodes_schedulable(nodes):
         )
 
 
-def assert_pods_failed_or_pending(pods: list, namespace=None) -> None:
+def assert_pods_failed_or_pending(pods: list) -> None:
     """
     Validates all pods are not in failed nor pending phase
 
@@ -65,16 +65,16 @@ def assert_pods_failed_or_pending(pods: list, namespace=None) -> None:
     """
     LOGGER.info("Verify all pods are not failed nor pending.")
 
-    failed_or_pending_pods = []
-    for pod in pods:
-        if namespace and pod.namespace != namespace:
-            continue
-
-        if pod.exists and pod.instance.status.phase in [
+    failed_or_pending_pods = [
+        (pod.name, pod.instance.status.phase)
+        for pod in pods
+        if pod.exists
+        and pod.instance.status.phase
+        in [
             pod.Status.PENDING,
             pod.Status.FAILED,
-        ]:
-            failed_or_pending_pods.append(f"{pod.name} is {pod.instance.status.phase}")
+        ]
+    ]
 
     if failed_or_pending_pods:
         raise PodsFailedOrPendingError(
