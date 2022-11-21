@@ -6,10 +6,6 @@ class NodeUnschedulableError(Exception):
     pass
 
 
-class PodsHealthCheckError(Exception):
-    pass
-
-
 class PodsFailedOrPendingError(Exception):
     pass
 
