@@ -213,7 +213,7 @@ def collect_pods_data(pods_list, base_directory, collect_pod_logs=True):
             write_container_logs_to_files(pod=pod, base_directory=pod_output_dir)
 
 
-def write_to_file(file_name, content, base_directory, extra_dir_name=None):
+def write_to_file(file_name, content, base_directory, extra_dir_name=None, mode="w"):
     """
     Write to a file that will be available after the run execution.
 
@@ -222,6 +222,7 @@ def write_to_file(file_name, content, base_directory, extra_dir_name=None):
         content (str): the content of the file to write.
         base_directory (str): the base directory to write the file
         extra_dir_name (str, optional): directory name to create inside base_directory.
+        mode (str, optional): specifies the mode in which the file is opened.
     """
     os.makedirs(base_directory, exist_ok=True)
     file_path = os.path.join(base_directory, file_name)
@@ -231,7 +232,7 @@ def write_to_file(file_name, content, base_directory, extra_dir_name=None):
         file_path = os.path.join(extras_dir, file_name)
 
     try:
-        with open(file_path, "w") as fd:
+        with open(file_path, mode) as fd:
             fd.write(content)
     except Exception as exp:
         LOGGER.warning(f"Failed to write extras to file: {file_path} {exp}")
