@@ -65,16 +65,12 @@ def assert_pods_failed_or_pending(pods: list) -> None:
     """
     LOGGER.info("Verify all pods are not failed nor pending.")
 
-    failed_or_pending_pods = [
-        (pod.name, pod.instance.status.phase)
-        for pod in pods
-        if pod.exists
-        and pod.instance.status.phase
-        in [
-            pod.Status.PENDING,
-            pod.Status.FAILED,
-        ]
-    ]
+    failed_or_pending_pods = []
+    for pod in pods:
+        if pod.exists:
+            pod_status = pod.instance.status.phase
+            if pod_status in [pod.Status.PENDING, pod.Status.FAILED]:
+                failed_or_pending_pods.append((pod.name, pod_status))
 
     if failed_or_pending_pods:
         failed_or_pending_pods_str = "\n\t".join(map(str, failed_or_pending_pods))
