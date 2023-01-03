@@ -63,7 +63,7 @@ def assert_pods_failed_or_pending(pods: list[Pod]) -> None:
          pods: List of pod objects
 
     Raises:
-        PodsFailedOrPendingError, if there are failed or pending pods
+        PodsFailedOrPendingError: if there are failed or pending pods
     """
     LOGGER.info("Verify all pods are not failed nor pending.")
 
