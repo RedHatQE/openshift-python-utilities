@@ -17,3 +17,4 @@ fcn_exclude_functions =
     fd,
     logging,
     subprocess,
+    yaml,
