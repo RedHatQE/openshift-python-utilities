@@ -14,6 +14,7 @@ setup(
         "openshift",
         "colorlog",
         "pytest",
+        "openshift-python-wrapper==4.11.*",
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.8",
 )

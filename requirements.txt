@@ -4,3 +4,4 @@ pytest
 pytest-testconfig
 PyYAML
 web-pdb
+openshift-python-wrapper==4.11.*
