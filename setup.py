@@ -10,6 +10,13 @@ setup(
     keywords=["Openshift"],
     packages=find_packages(),
     include_package_data=True,
-    install_requires=["openshift", "colorlog", "pytest", "pytest-testconfig", "PyYAML"],
+    install_requires=[
+        "openshift",
+        "colorlog",
+        "pytest",
+        "pytest-testconfig",
+        "PyYAML",
+        "openshift-python-wrapper",
+    ],
     python_requires=">=3.6",
 )
