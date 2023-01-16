@@ -1,7 +1,5 @@
 import importlib
 
-from ocp_resources.pod import Pod
-
 from ocp_utilities.data_collector import (
     get_data_collector_base_dir,
     get_data_collector_dict,
@@ -55,7 +53,7 @@ def assert_nodes_schedulable(nodes):
         )
 
 
-def assert_pods_failed_or_pending(pods: list[Pod]) -> None:
+def assert_pods_failed_or_pending(pods):
     """
     Validates all pods are not in failed nor pending phase
 
