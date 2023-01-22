@@ -70,10 +70,12 @@ def assert_pods_failed_or_pending(pods):
         if pod.exists:
             pod_status = pod.instance.status.phase
             if pod_status in [pod.Status.PENDING, pod.Status.FAILED]:
-                failed_or_pending_pods.append((pod.name, pod_status))
+                failed_or_pending_pods.append(
+                    f"name: {pod.name}, namespace: {pod.namespace}, status: {pod_status}\n"
+                )
 
     if failed_or_pending_pods:
-        failed_or_pending_pods_str = "\n\t".join(map(str, failed_or_pending_pods))
+        failed_or_pending_pods_str = "\t".join(map(str, failed_or_pending_pods))
         raise PodsFailedOrPendingError(
             f"The following pods are failed or pending:\n\t{failed_or_pending_pods_str}",
         )
