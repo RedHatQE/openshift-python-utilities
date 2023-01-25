@@ -9,7 +9,7 @@ LOGGER = get_logger(name=__name__)
 TIMEOUT_30MIN = 30 * 60
 
 
-def run_command(command, verify_stderr=True, shell=False):
+def run_command(command, verify_stderr=True, shell=False, timeout=None):
     """
     Run command locally.
 
@@ -17,6 +17,7 @@ def run_command(command, verify_stderr=True, shell=False):
         command (list): Command to run
         verify_stderr (bool, default True): Check command stderr
         shell (bool, default False): run subprocess with shell toggle
+        timeout (int, optional): Command wait timeout
 
     Returns:
         tuple: True, out if command succeeded, False, err otherwise.
@@ -28,7 +29,7 @@ def run_command(command, verify_stderr=True, shell=False):
         stderr=subprocess.PIPE,
         shell=shell,
     )
-    out, err = sub_process.communicate()
+    out, err = sub_process.communicate(timeout=timeout)
     out_decoded = out.decode("utf-8")
     err_decoded = err.decode("utf-8")
 
