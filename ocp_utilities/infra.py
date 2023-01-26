@@ -139,6 +139,7 @@ def assert_nodes_in_healthy_condition(
 
     Raises:
         NodesNotHealthyConditionError: if any nodes DiskPressure
+<<<<<<< HEAD
         MemoryPressure, PIDPressure, NetworkUnavailable, etc condition is True
     """
     LOGGER.info("Verify all nodes are in a healthy condition.")
@@ -170,6 +171,28 @@ def assert_nodes_in_healthy_condition(
         nodes_unhealthy_condition_error_str = json.dumps(
             unhealthy_nodes_with_conditions,
             indent=3,
+=======
+        MemoryPressure, PIDPressure, NetworkUnavailable condition is True
+    """
+    LOGGER.info("Verify all nodes are in a healthy condition")
+    unhealthy_nodes_with_conditions = []
+    for node in nodes:
+        node_conditions = node.instance.status.conditions
+        condition_type_list = []
+        for condition in node_conditions:
+            if (
+                condition.type != Node.Condition.READY
+                and condition.status == Node.Condition.Status.TRUE
+            ):
+                condition_type_list.append(condition.type)
+
+        if condition_type_list:
+            unhealthy_nodes_with_conditions.append([node.name] + condition_type_list)
+
+    if unhealthy_nodes_with_conditions:
+        nodes_unhealthy_condition_error_str = "\n\t".join(
+            map(str, unhealthy_nodes_with_conditions)
+>>>>>>> 9c7af86 (Updated doc string)
         )
         raise NodesNotHealthyConditionError(
             f"Following are nodes with unhealthy condition/s:\n{nodes_unhealthy_condition_error_str}"
