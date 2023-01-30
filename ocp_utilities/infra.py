@@ -187,7 +187,11 @@ def assert_nodes_in_healthy_condition(
                 condition_type_list.append(condition.type)
 
         if condition_type_list:
+<<<<<<< HEAD
             unhealthy_nodes_with_conditions.append([node.name] + condition_type_list)
+=======
+            unhealthy_nodes_with_conditions[node.name] = condition_type_list
+>>>>>>> 709084a (Remove redundant code)
 
     if unhealthy_nodes_with_conditions:
         nodes_unhealthy_condition_error_str = "\n\t".join(
