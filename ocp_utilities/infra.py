@@ -175,6 +175,7 @@ def assert_nodes_in_healthy_condition(
         MemoryPressure, PIDPressure, NetworkUnavailable condition is True
     """
     LOGGER.info("Verify all nodes are in a healthy condition")
+<<<<<<< HEAD
     unhealthy_nodes_with_conditions = []
     for node in nodes:
         node_conditions = node.instance.status.conditions
@@ -185,6 +186,26 @@ def assert_nodes_in_healthy_condition(
                 and condition.status == Node.Condition.Status.TRUE
             ):
                 condition_type_list.append(condition.type)
+=======
+
+    default_healthy_node_condition_type = dict(
+        DiskPressure=Node.Condition.Status.FALSE,
+        MemoryPressure=Node.Condition.Status.FALSE,
+        PIDPressure=Node.Condition.Status.FALSE,
+        NetworkUnavailable=Node.Condition.Status.FALSE,
+        Ready=Node.Condition.Status.TRUE,
+    )
+
+    unhealthy_nodes_with_conditions = {}
+    for node in nodes:
+
+        condition_type_list = [
+            condition.type
+            for condition in node.instance.status.conditions
+            if default_healthy_node_condition_type.get(condition.type)
+            != condition.status
+        ]
+>>>>>>> a02c861 (Updated to include default healthy node condition types and status)
 
         if condition_type_list:
 <<<<<<< HEAD
