@@ -118,10 +118,14 @@ def assert_pods_failed_or_pending(pods):
         )
 
 
+<<<<<<< HEAD
 def assert_nodes_in_healthy_condition(
     nodes,
     healthy_node_condition_type=None,
 ):
+=======
+def assert_nodes_in_healthy_condition(nodes, healthy_node_condition_type=None):
+>>>>>>> b2cb7be (Updated assert_nodes_in_healthy_condition - added argument to facilitate passing in a dictionary with the condition type/s and the respective healthy condition status)
     """
     Validates nodes are in a healthy condition.
     Nodes Ready condition is True and none of the following node conditions is True:
@@ -174,6 +178,7 @@ def assert_nodes_in_healthy_condition(
 =======
         MemoryPressure, PIDPressure, NetworkUnavailable condition is True
     """
+<<<<<<< HEAD
     LOGGER.info("Verify all nodes are in a healthy condition")
 <<<<<<< HEAD
     unhealthy_nodes_with_conditions = []
@@ -187,14 +192,21 @@ def assert_nodes_in_healthy_condition(
             ):
                 condition_type_list.append(condition.type)
 =======
+=======
+    LOGGER.info("Verify all nodes are in a healthy condition.")
+>>>>>>> b2cb7be (Updated assert_nodes_in_healthy_condition - added argument to facilitate passing in a dictionary with the condition type/s and the respective healthy condition status)
 
-    default_healthy_node_condition_type = dict(
-        DiskPressure=Node.Condition.Status.FALSE,
-        MemoryPressure=Node.Condition.Status.FALSE,
-        PIDPressure=Node.Condition.Status.FALSE,
-        NetworkUnavailable=Node.Condition.Status.FALSE,
-        Ready=Node.Condition.Status.TRUE,
-    )
+    default_healthy_node_condition_type = {
+        "DiskPressure": Node.Condition.Status.FALSE,
+        "MemoryPressure": Node.Condition.Status.FALSE,
+        "PIDPressure": Node.Condition.Status.FALSE,
+        "NetworkUnavailable": Node.Condition.Status.FALSE,
+        "Ready": Node.Condition.Status.TRUE,
+        "Disk": Node.Condition.Status.FALSE,
+    }
+
+    if not healthy_node_condition_type:
+        healthy_node_condition_type = default_healthy_node_condition_type
 
     unhealthy_nodes_with_conditions = {}
     for node in nodes:
@@ -202,8 +214,8 @@ def assert_nodes_in_healthy_condition(
         condition_type_list = [
             condition.type
             for condition in node.instance.status.conditions
-            if default_healthy_node_condition_type.get(condition.type)
-            != condition.status
+            if condition.type in healthy_node_condition_type
+            and healthy_node_condition_type.get(condition.type) != condition.status
         ]
 >>>>>>> a02c861 (Updated to include default healthy node condition types and status)
 
