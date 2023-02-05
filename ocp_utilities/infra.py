@@ -1,7 +1,7 @@
 import importlib
 
 import kubernetes
-from ocpwrapper_data_collector.data_collector import (
+from ocp_wrapper_data_collector.data_collector import (
     get_data_collector_base_dir,
     get_data_collector_dict,
 )
