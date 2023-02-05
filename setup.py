@@ -16,7 +16,7 @@ setup(
         "pytest",
         "pytest-testconfig",
         "PyYAML",
-        "openshift-python-wrapper",
+        "openshift-python-wrapper-data-collector",
     ],
     python_requires=">=3.8",
 )

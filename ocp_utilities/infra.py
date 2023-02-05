@@ -1,11 +1,11 @@
 import importlib
 
 import kubernetes
-
-from ocp_utilities.data_collector import (
+from ocpwrapper_data_collector.data_collector import (
     get_data_collector_base_dir,
     get_data_collector_dict,
 )
+
 from ocp_utilities.exceptions import (
     NodeNotReadyError,
     NodeUnschedulableError,
