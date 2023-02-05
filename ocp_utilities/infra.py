@@ -1,5 +1,7 @@
 import importlib
 
+import kubernetes
+
 from ocp_utilities.data_collector import (
     get_data_collector_base_dir,
     get_data_collector_dict,
@@ -13,6 +15,37 @@ from ocp_utilities.logger import get_logger
 
 
 LOGGER = get_logger(name=__name__)
+
+
+def get_client(config_file=None, config_dict=None, context=None):
+    """
+    Get a kubernetes client.
+
+    Pass either config_file or config_dict.
+    If none of them are passed, client will be created from default OS kubeconfig
+    (environment variable or .kube folder).
+
+    Args:
+        config_file (str): path to a kubeconfig file.
+        config_dict (dict): dict with kubeconfig configuration.
+        context (str): name of the context to use.
+
+    Returns:
+        DynamicClient: a kubernetes client.
+    """
+    if config_dict:
+        return kubernetes.dynamic.DynamicClient(
+            client=kubernetes.config.new_client_from_config_dict(
+                config_dict=config_dict,
+                context=context,
+            )
+        )
+    return kubernetes.dynamic.DynamicClient(
+        client=kubernetes.config.new_client_from_config(
+            config_file=config_file,
+            context=context,
+        )
+    )
 
 
 def assert_nodes_ready(nodes):
