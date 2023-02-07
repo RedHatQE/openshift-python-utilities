@@ -3,7 +3,6 @@ import json
 
 import kubernetes
 from ocp_resources.node import Node
-
 from ocp_wrapper_data_collector.data_collector import (
     get_data_collector_base_dir,
     get_data_collector_dict,
@@ -118,22 +117,10 @@ def assert_pods_failed_or_pending(pods):
         )
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 def assert_nodes_in_healthy_condition(
     nodes,
     healthy_node_condition_type=None,
 ):
-=======
-def assert_nodes_in_healthy_condition(nodes, healthy_node_condition_type=None):
->>>>>>> b2cb7be (Updated assert_nodes_in_healthy_condition - added argument to facilitate passing in a dictionary with the condition type/s and the respective healthy condition status)
-=======
-def assert_nodes_in_healthy_condition(
-    nodes,
-    bypass_check_if_kubelet_ready=True,
-    healthy_node_condition_type=None,
-):
->>>>>>> 649f14c (Added a default argument to bypass checking a node's conditions if node.kubelet_ready is True)
     """
     Validates nodes are in a healthy condition.
     Nodes Ready condition is True and none of the following node conditions is True:
@@ -145,19 +132,12 @@ def assert_nodes_in_healthy_condition(
     Args:
          nodes(list): List of Node objects
 
-         bypass_check_if_kubelet_ready:
-            Bypass checking a node's conditions if node.kubelet_ready is True
-
          healthy_node_condition_type (dict):
             Dictionary with condition type and the respective healthy condition status:
             Example: {"DiskPressure": "False", ...}
 
     Raises:
         NodesNotHealthyConditionError: if any nodes DiskPressure
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 649f14c (Added a default argument to bypass checking a node's conditions if node.kubelet_ready is True)
         MemoryPressure, PIDPressure, NetworkUnavailable, etc condition is True
     """
     LOGGER.info("Verify all nodes are in a healthy condition.")
@@ -189,69 +169,6 @@ def assert_nodes_in_healthy_condition(
         nodes_unhealthy_condition_error_str = json.dumps(
             unhealthy_nodes_with_conditions,
             indent=3,
-=======
-        MemoryPressure, PIDPressure, NetworkUnavailable condition is True
-    """
-<<<<<<< HEAD
-    LOGGER.info("Verify all nodes are in a healthy condition")
-<<<<<<< HEAD
-    unhealthy_nodes_with_conditions = []
-    for node in nodes:
-        node_conditions = node.instance.status.conditions
-        condition_type_list = []
-        for condition in node_conditions:
-            if (
-                condition.type != Node.Condition.READY
-                and condition.status == Node.Condition.Status.TRUE
-            ):
-                condition_type_list.append(condition.type)
-=======
-=======
-    LOGGER.info("Verify all nodes are in a healthy condition.")
->>>>>>> b2cb7be (Updated assert_nodes_in_healthy_condition - added argument to facilitate passing in a dictionary with the condition type/s and the respective healthy condition status)
-
-    default_healthy_node_condition_type = {
-        "Disk": Node.Condition.Status.FALSE,
-        "DiskPressure": Node.Condition.Status.FALSE,
-        "MemoryPressure": Node.Condition.Status.FALSE,
-        "NetworkUnavailable": Node.Condition.Status.FALSE,
-        "PIDPressure": Node.Condition.Status.FALSE,
-        "Ready": Node.Condition.Status.TRUE,
-    }
-
-    if not healthy_node_condition_type:
-        healthy_node_condition_type = default_healthy_node_condition_type
-
-    unhealthy_nodes_with_conditions = {}
-    for node in nodes:
-
-        if bypass_check_if_kubelet_ready and node.kubelet_ready:
-            continue
-
-        unhealthy_condition_type_list = [
-            condition.type
-            for condition in node.instance.status.conditions
-            if condition.type in healthy_node_condition_type
-            and healthy_node_condition_type[condition.type] != condition.status
-        ]
->>>>>>> a02c861 (Updated to include default healthy node condition types and status)
-
-<<<<<<< HEAD
-        if condition_type_list:
-<<<<<<< HEAD
-            unhealthy_nodes_with_conditions.append([node.name] + condition_type_list)
-=======
-            unhealthy_nodes_with_conditions[node.name] = condition_type_list
->>>>>>> 709084a (Remove redundant code)
-=======
-        if unhealthy_condition_type_list:
-            unhealthy_nodes_with_conditions[node.name] = unhealthy_condition_type_list
->>>>>>> 649f14c (Added a default argument to bypass checking a node's conditions if node.kubelet_ready is True)
-
-    if unhealthy_nodes_with_conditions:
-        nodes_unhealthy_condition_error_str = "\n\t".join(
-            map(str, unhealthy_nodes_with_conditions)
->>>>>>> 9c7af86 (Updated doc string)
         )
         raise NodesNotHealthyConditionError(
             f"Following are nodes with unhealthy condition/s:\n{nodes_unhealthy_condition_error_str}"
