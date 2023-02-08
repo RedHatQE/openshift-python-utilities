@@ -128,33 +128,38 @@ def assert_nodes_in_healthy_condition(
         - MemoryPressure
         - PIDPressure
         - NetworkUnavailable
+        - OutOfDisk
 
     Args:
          nodes(list): List of Node objects
 
          healthy_node_condition_type (dict):
-            Dictionary with condition type and the respective healthy condition status:
-            Example: {"DiskPressure": "False", ...}
+            Dictionary with condition type and the respective healthy condition
+                status: Example: {"DiskPressure": "False", ...}
 
     Raises:
-        NodesNotHealthyConditionError: if any nodes DiskPressure
-        MemoryPressure, PIDPressure, NetworkUnavailable, etc condition is True
+        NodesNotHealthyConditionError: if any nodes DiskPressure MemoryPressure,
+            PIDPressure, NetworkUnavailable, etc condition is True
     """
     LOGGER.info("Verify all nodes are in a healthy condition.")
 
     if not healthy_node_condition_type:
         healthy_node_condition_type = {
-            "Disk": Node.Condition.Status.FALSE,
+            "OutOfDisk": Node.Condition.Status.FALSE,
             "DiskPressure": Node.Condition.Status.FALSE,
             "MemoryPressure": Node.Condition.Status.FALSE,
             "NetworkUnavailable": Node.Condition.Status.FALSE,
             "PIDPressure": Node.Condition.Status.FALSE,
-            "Ready": Node.Condition.Status.TRUE,
+            Node.Condition.READY: Node.Condition.Status.TRUE,
         }
+
+    elif type(healthy_node_condition_type) != dict:
+        raise TypeError(
+            f"A dict is required but got type {type(healthy_node_condition_type)}"
+        )
 
     unhealthy_nodes_with_conditions = {}
     for node in nodes:
-
         unhealthy_condition_type_list = [
             condition.type
             for condition in node.instance.status.conditions
