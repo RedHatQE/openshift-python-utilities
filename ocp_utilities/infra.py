@@ -5,6 +5,7 @@ from ocp_wrapper_data_collector.data_collector import (
     get_data_collector_base_dir,
     get_data_collector_dict,
 )
+from urllib3.exceptions import MaxRetryError
 
 from ocp_utilities.exceptions import (
     NodeNotReadyError,
@@ -17,7 +18,7 @@ from ocp_utilities.logger import get_logger
 LOGGER = get_logger(name=__name__)
 
 
-def get_client(config_file=None, config_dict=None, context=None):
+def get_client(config_file=None, config_dict=None, context=None, **kwargs):
     """
     Get a kubernetes client.
 
@@ -33,19 +34,30 @@ def get_client(config_file=None, config_dict=None, context=None):
     Returns:
         DynamicClient: a kubernetes client.
     """
+    # Ref: https://github.com/kubernetes-client/python/blob/v26.1.0/kubernetes/base/config/kube_config.py
     if config_dict:
         return kubernetes.dynamic.DynamicClient(
             client=kubernetes.config.new_client_from_config_dict(
-                config_dict=config_dict,
-                context=context,
+                config_dict=config_dict, context=context, **kwargs
             )
         )
-    return kubernetes.dynamic.DynamicClient(
-        client=kubernetes.config.new_client_from_config(
-            config_file=config_file,
-            context=context,
+    try:
+        # Ref: https://github.com/kubernetes-client/python/blob/v26.1.0/kubernetes/base/config/__init__.py
+        LOGGER.info("Trying to get client via new_client_from_config")
+        return kubernetes.dynamic.DynamicClient(
+            client=kubernetes.config.new_client_from_config(
+                config_file=config_file, context=context, **kwargs
+            )
         )
-    )
+    except MaxRetryError:
+        # Ref: https://github.com/kubernetes-client/python/blob/v26.1.0/kubernetes/base/config/incluster_config.py
+        LOGGER.info("Trying to get client via incluster_config")
+        return kubernetes.dynamic.DynamicClient(
+            client=kubernetes.config.incluster_config.load_incluster_config(
+                client_configuration=kwargs.get("client_configuration"),
+                try_refresh_token=kwargs.get("try_refresh_token", True),
+            )
+        )
 
 
 def assert_nodes_ready(nodes):
