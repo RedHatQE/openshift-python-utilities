@@ -1,6 +1,8 @@
 import importlib
+import json
 
 import kubernetes
+from ocp_resources.node import Node
 from ocp_wrapper_data_collector.data_collector import (
     get_data_collector_base_dir,
     get_data_collector_dict,
@@ -9,6 +11,7 @@ from urllib3.exceptions import MaxRetryError
 
 from ocp_utilities.exceptions import (
     NodeNotReadyError,
+    NodesNotHealthyConditionError,
     NodeUnschedulableError,
     PodsFailedOrPendingError,
 )
@@ -123,6 +126,69 @@ def assert_pods_failed_or_pending(pods):
         failed_or_pending_pods_str = "\t".join(map(str, failed_or_pending_pods))
         raise PodsFailedOrPendingError(
             f"The following pods are failed or pending:\n\t{failed_or_pending_pods_str}",
+        )
+
+
+def assert_nodes_in_healthy_condition(
+    nodes,
+    healthy_node_condition_type=None,
+):
+    """
+    Validates nodes are in a healthy condition.
+    Nodes Ready condition is True and the following node conditions are False:
+        - DiskPressure
+        - MemoryPressure
+        - PIDPressure
+        - NetworkUnavailable
+        - OutOfDisk
+
+    Args:
+         nodes(list): List of Node objects
+
+         healthy_node_condition_type (dict):
+            Dictionary with condition type and the respective healthy condition
+                status: Example: {"DiskPressure": "False", ...}
+
+    Raises:
+        NodesNotHealthyConditionError: if any nodes DiskPressure MemoryPressure,
+            PIDPressure, NetworkUnavailable, etc condition is True
+    """
+    LOGGER.info("Verify all nodes are in a healthy condition.")
+
+    if not healthy_node_condition_type:
+        healthy_node_condition_type = {
+            "OutOfDisk": Node.Condition.Status.FALSE,
+            "DiskPressure": Node.Condition.Status.FALSE,
+            "MemoryPressure": Node.Condition.Status.FALSE,
+            "NetworkUnavailable": Node.Condition.Status.FALSE,
+            "PIDPressure": Node.Condition.Status.FALSE,
+            Node.Condition.READY: Node.Condition.Status.TRUE,
+        }
+
+    if not isinstance(healthy_node_condition_type, dict):
+        raise TypeError(
+            f"A dict is required but got type {type(healthy_node_condition_type)}"
+        )
+
+    unhealthy_nodes_with_conditions = {}
+    for node in nodes:
+        unhealthy_condition_type_list = [
+            condition.type
+            for condition in node.instance.status.conditions
+            if condition.type in healthy_node_condition_type
+            and healthy_node_condition_type[condition.type] != condition.status
+        ]
+
+        if unhealthy_condition_type_list:
+            unhealthy_nodes_with_conditions[node.name] = unhealthy_condition_type_list
+
+    if unhealthy_nodes_with_conditions:
+        nodes_unhealthy_condition_error_str = json.dumps(
+            unhealthy_nodes_with_conditions,
+            indent=3,
+        )
+        raise NodesNotHealthyConditionError(
+            f"Following are nodes with unhealthy condition/s:\n{nodes_unhealthy_condition_error_str}"
         )
 
 
