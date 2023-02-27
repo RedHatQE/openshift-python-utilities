@@ -10,6 +10,10 @@ class PodsFailedOrPendingError(Exception):
     pass
 
 
+class NodesNotHealthyConditionError(Exception):
+    pass
+
+
 class CommandExecFailed(Exception):
     def __init__(self, name, err=None):
         self.name = name
