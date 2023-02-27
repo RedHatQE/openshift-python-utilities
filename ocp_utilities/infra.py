@@ -135,7 +135,7 @@ def assert_nodes_in_healthy_condition(
 ):
     """
     Validates nodes are in a healthy condition.
-    Nodes Ready condition is True and none of the following node conditions is True:
+    Nodes Ready condition is True and the following node conditions are False:
         - DiskPressure
         - MemoryPressure
         - PIDPressure
