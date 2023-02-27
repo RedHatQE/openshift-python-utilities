@@ -165,7 +165,7 @@ def assert_nodes_in_healthy_condition(
             Node.Condition.READY: Node.Condition.Status.TRUE,
         }
 
-    elif type(healthy_node_condition_type) != dict:
+    if not isinstance(healthy_node_condition_type, dict):
         raise TypeError(
             f"A dict is required but got type {type(healthy_node_condition_type)}"
         )
