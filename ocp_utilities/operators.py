@@ -14,17 +14,20 @@ TIMEOUT_5MIN = 5 * 60
 TIMEOUT_10MIN = 10 * 60
 
 
-def get_install_plan_from_subscription(client, subscription, timeout=TIMEOUT_5MIN):
+def wait_for_install_plan_from_subscription(client, subscription, timeout=TIMEOUT_5MIN):
     """
-    Get InstallPlan from Subscription.
+    Wait for InstallPlan from Subscription.
 
     Args:
         client (DynamicClient): Cluster client.
-        subscription (Subscription): Subscription to get InstallPlan from.
+        subscription (Subscription): Subscription to wait for InstallPlan.
         timeout (int): Timeout in seconds to wait for the InstallPlan to be available.
 
     Returns:
         InstallPlan: Instance of InstallPlan.
+
+    Raises:
+        TimeoutExpiredError: If timeout reached.
 
     """
     LOGGER.info(
@@ -61,7 +64,7 @@ def wait_for_operator_install(admin_client, subscription, timeout=TIMEOUT_5MIN):
         subscription (Subscription): Subscription instance.
         timeout (int): Timeout in seconds to wait for operator to be installed.
     """
-    install_plan = get_install_plan_from_subscription(
+    install_plan = wait_for_install_plan_from_subscription(
         client=admin_client, subscription=subscription
     )
     install_plan.wait_for_status(status=install_plan.Status.COMPLETE, timeout=timeout)
@@ -85,7 +88,7 @@ def wait_for_csv_successful_state(admin_client, subscription, timeout=TIMEOUT_10
         admin_client=admin_client,
         namespace=subscription.namespace,
     )
-    csv.wait_for_status(status=ClusterServiceVersion.Status.SUCCEEDED, timeout=timeout)
+    csv.wait_for_status(status=csv.Status.SUCCEEDED, timeout=timeout)
 
 
 def get_csv_by_name(csv_name, admin_client, namespace):
