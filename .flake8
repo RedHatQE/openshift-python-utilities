@@ -18,3 +18,4 @@ fcn_exclude_functions =
     logging,
     subprocess,
     yaml,
+    json,
