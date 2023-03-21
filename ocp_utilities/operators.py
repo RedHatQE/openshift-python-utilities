@@ -131,7 +131,7 @@ def install_operator(
         name (str): Name of the operator to install.
         channel (str): Channel to install operator from.
         source (str): CatalogSource name.
-        target_namespaces (list): Target namespaces for the operator install.
+        target_namespaces (list): Target namespaces for the operator install process.
         timeout (int): Timeout in seconds to wait for operator to be ready.
     """
 
