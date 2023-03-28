@@ -4,6 +4,7 @@ from kubernetes.dynamic.exceptions import ResourceNotFoundError
 from ocp_resources.cluster_service_version import ClusterServiceVersion
 from ocp_resources.installplan import InstallPlan
 from ocp_resources.namespace import Namespace
+from ocp_resources.operator import Operator
 from ocp_resources.operator_group import OperatorGroup
 from ocp_resources.subscription import Subscription
 from ocp_resources.utils import TimeoutExpiredError, TimeoutSampler
@@ -170,3 +171,47 @@ def install_operator(
         subscription=subscription,
         timeout=timeout,
     )
+
+
+def uninstall_operator(admin_client, name, timeout):
+    """
+    Uninstall operator on cluster.
+
+    Args:
+        admin_client (DynamicClient): Cluster client.
+        name (str): Name of the operator to uninstall.
+        timeout (int): Timeout in seconds to wait for operator to be uninstalled.
+    """
+
+    csv_name = None
+    subscription = Subscription(
+        client=admin_client,
+        name=name,
+        namespace=name,
+    )
+    if subscription.exists:
+        csv_name = subscription.instance.status.installedCSV
+        subscription.clean_up()
+
+    OperatorGroup(
+        client=admin_client,
+        name=name,
+        namespace=name,
+    ).clean_up()
+
+    for _operator in Operator.get(dyn_client=admin_client):
+        if _operator.name.startswith(name):
+            # operator name convention is <name>.<namespace>
+            namespace = name.split(".")[-1]
+            ns = Namespace(client=admin_client, name=namespace)
+            if ns.exists:
+                ns.clean_up()
+
+    if csv_name:
+        csv = ClusterServiceVersion(
+            client=admin_client,
+            namespace=subscription.namespace,
+            name=csv_name,
+        )
+
+        csv.wait_deleted(timeout=timeout)
