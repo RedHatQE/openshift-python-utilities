@@ -122,7 +122,7 @@ def get_csv_by_name(admin_client, csv_name, namespace):
 
 
 def install_operator(
-    admin_client, name, channel, source, target_namespaces, timeout=TIMEOUT_30MIN
+    admin_client, name, channel, source, target_namespaces=None, timeout=TIMEOUT_30MIN
 ):
     """
     Install operator on cluster.
@@ -132,7 +132,8 @@ def install_operator(
         name (str): Name of the operator to install.
         channel (str): Channel to install operator from.
         source (str): CatalogSource name.
-        target_namespaces (list): Target namespaces for the operator install process.
+        target_namespaces (list, optional): Target namespaces for the operator install process.
+            If not provided, a namespace with te operator name will be created and used.
         timeout (int): Timeout in seconds to wait for operator to be ready.
     """
 
@@ -173,7 +174,7 @@ def install_operator(
     )
 
 
-def uninstall_operator(admin_client, name, timeout):
+def uninstall_operator(admin_client, name, timeout=TIMEOUT_30MIN):
     """
     Uninstall operator on cluster.
 
