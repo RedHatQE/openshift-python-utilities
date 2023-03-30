@@ -1,2 +1,64 @@
 [tool.black]
 line-length = 88
+target_version = ['py38', 'py39', 'py310', "py311"]
+exclude = '''
+(
+  /(
+    | \.git
+    | \.venv
+    | \.mypy_cache
+    | \.tox
+  )/
+)
+'''
+
+[tool.isort]
+line_length = 88
+profile = "black"
+
+
+[build-system]
+requires = ["setuptools>=61.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openshift-python-utilities"
+authors = [
+    {name = "Meni Yakove", email = "myakove@gmail.com"},
+    {name = "Ruth Netser", email = "rnetser@gmail.com"}
+]
+description = "A utilities repository for https://github.com/RedHatQE/openshift-python-wrapper"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.8"
+keywords = ["Openshift"]
+dependencies = [
+    "openshift",
+    "colorlog",
+    "pytest",
+    "pytest-testconfig",
+    "PyYAML",
+    "openshift-python-wrapper-data-collector",
+]
+dynamic = ["version"]
+# ...
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.urls]
+Homepage = "https://github.com/RedHatQE/openshift-python-utilities"
+Download = "https://pypi.org/project/openshift-python-utilities/"
+"Bug Tracker" = "https://github.com/RedHatQE/openshift-python-utilities/issues"
+Documentation = "https://github.com/RedHatQE/openshift-python-utilities/blob/main/README.md"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["ocp_utilities"]
