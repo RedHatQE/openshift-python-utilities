@@ -41,6 +41,7 @@ dependencies = [
     "pytest-testconfig",
     "PyYAML",
     "openshift-python-wrapper-data-collector",
+    "python-simple-logger",
 ]
 dynamic = ["version"]
 # ...

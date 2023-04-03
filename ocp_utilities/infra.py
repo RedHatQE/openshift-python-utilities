@@ -15,7 +15,7 @@ from ocp_utilities.exceptions import (
     NodeUnschedulableError,
     PodsFailedOrPendingError,
 )
-from ocp_utilities.logger import get_logger
+from simple_logger.logger import get_logger
 
 
 LOGGER = get_logger(name=__name__)

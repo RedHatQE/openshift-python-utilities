@@ -10,7 +10,7 @@ from ocp_resources.subscription import Subscription
 from ocp_resources.utils import TimeoutExpiredError, TimeoutSampler
 
 from ocp_utilities.infra import cluster_resource
-from ocp_utilities.logger import get_logger
+from simple_logger.logger import get_logger
 
 
 LOGGER = get_logger(name=__name__)
