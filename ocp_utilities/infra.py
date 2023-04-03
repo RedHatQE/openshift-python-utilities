@@ -7,6 +7,7 @@ from ocp_wrapper_data_collector.data_collector import (
     get_data_collector_base_dir,
     get_data_collector_dict,
 )
+from simple_logger.logger import get_logger
 from urllib3.exceptions import MaxRetryError
 
 from ocp_utilities.exceptions import (
@@ -15,7 +16,6 @@ from ocp_utilities.exceptions import (
     NodeUnschedulableError,
     PodsFailedOrPendingError,
 )
-from simple_logger.logger import get_logger
 
 
 LOGGER = get_logger(name=__name__)

@@ -1,7 +1,8 @@
 import subprocess
 
-from ocp_utilities.exceptions import CommandExecFailed
 from simple_logger.logger import get_logger
+
+from ocp_utilities.exceptions import CommandExecFailed
 
 
 LOGGER = get_logger(name=__name__)

@@ -8,9 +8,9 @@ from ocp_resources.operator import Operator
 from ocp_resources.operator_group import OperatorGroup
 from ocp_resources.subscription import Subscription
 from ocp_resources.utils import TimeoutExpiredError, TimeoutSampler
+from simple_logger.logger import get_logger
 
 from ocp_utilities.infra import cluster_resource
-from simple_logger.logger import get_logger
 
 
 LOGGER = get_logger(name=__name__)

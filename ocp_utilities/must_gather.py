@@ -1,6 +1,7 @@
 import shlex
 
 from simple_logger.logger import get_logger
+
 from ocp_utilities.utils import run_command
 
 
