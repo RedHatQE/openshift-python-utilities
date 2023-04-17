@@ -16,6 +16,7 @@ def run_command(
     shell=False,
     timeout=None,
     capture_output=False,
+    check=True,
     **kwargs,
 ):
     """
@@ -26,7 +27,9 @@ def run_command(
         verify_stderr (bool, default True): Check command stderr
         shell (bool, default False): run subprocess with shell toggle
         timeout (int, optional): Command wait timeout
-        capture_output (bool, optional): Capture command output
+        capture_output (bool, default False): Capture command output
+        check (boot, default True):  If check is True and the exit code was non-zero, it raises a
+            CalledProcessError
 
     Returns:
         tuple: True, out if command succeeded, False, err otherwise.
@@ -35,7 +38,7 @@ def run_command(
     sub_process = subprocess.run(
         command,
         capture_output=capture_output,
-        check=True,
+        check=check,
         shell=shell,
         text=True,
         timeout=timeout,
