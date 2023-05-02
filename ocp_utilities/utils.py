@@ -15,7 +15,7 @@ def run_command(
     verify_stderr=True,
     shell=False,
     timeout=None,
-    capture_output=False,
+    capture_output=True,
     check=True,
     **kwargs,
 ):
