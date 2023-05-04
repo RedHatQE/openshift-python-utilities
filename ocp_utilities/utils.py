@@ -10,7 +10,15 @@ LOGGER = get_logger(name=__name__)
 TIMEOUT_30MIN = 30 * 60
 
 
-def run_command(command, verify_stderr=True, shell=False, timeout=None):
+def run_command(
+    command,
+    verify_stderr=True,
+    shell=False,
+    timeout=None,
+    capture_output=True,
+    check=True,
+    **kwargs,
+):
     """
     Run command locally.
 
@@ -19,20 +27,25 @@ def run_command(command, verify_stderr=True, shell=False, timeout=None):
         verify_stderr (bool, default True): Check command stderr
         shell (bool, default False): run subprocess with shell toggle
         timeout (int, optional): Command wait timeout
+        capture_output (bool, default False): Capture command output
+        check (boot, default True):  If check is True and the exit code was non-zero, it raises a
+            CalledProcessError
 
     Returns:
         tuple: True, out if command succeeded, False, err otherwise.
     """
     LOGGER.info(f"Running {' '.join(command)} command")
-    sub_process = subprocess.Popen(
+    sub_process = subprocess.run(
         command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=capture_output,
+        check=check,
         shell=shell,
+        text=True,
+        timeout=timeout,
+        **kwargs,
     )
-    out, err = sub_process.communicate(timeout=timeout)
-    out_decoded = out.decode("utf-8")
-    err_decoded = err.decode("utf-8")
+    out_decoded = sub_process.stdout
+    err_decoded = sub_process.stderr
 
     error_msg = f"Failed to run {command}. rc: {sub_process.returncode}, out: {out_decoded}, error: {err_decoded}"
     if sub_process.returncode != 0:
