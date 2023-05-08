@@ -61,7 +61,12 @@ def run_command(
 
 
 def run_ssh_commands(
-    host, commands, get_pty=False, check_rc=True, timeout=TIMEOUT_30MIN, tcp_timeout=None
+    host,
+    commands,
+    get_pty=False,
+    check_rc=True,
+    timeout=TIMEOUT_30MIN,
+    tcp_timeout=None,
 ):
     """
     Run commands via SSH
