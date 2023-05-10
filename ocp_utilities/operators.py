@@ -122,7 +122,13 @@ def get_csv_by_name(admin_client, csv_name, namespace):
 
 
 def install_operator(
-    admin_client, name, channel, source, target_namespaces=None, timeout=TIMEOUT_30MIN
+    admin_client,
+    name,
+    channel,
+    source,
+    target_namespaces=None,
+    timeout=TIMEOUT_30MIN,
+    operator_namespace=None,
 ):
     """
     Install operator on cluster.
@@ -135,8 +141,10 @@ def install_operator(
         target_namespaces (list, optional): Target namespaces for the operator install process.
             If not provided, a namespace with te operator name will be created and used.
         timeout (int): Timeout in seconds to wait for operator to be ready.
+        operator_namespace (str, optional): Operator namespace, if not provided, operator name will be used
     """
 
+    operator_namespace = operator_namespace or name
     if target_namespaces:
         for namespace in target_namespaces:
             ns = Namespace(client=admin_client, name=namespace)
@@ -146,21 +154,21 @@ def install_operator(
             ns.deploy(wait=True)
 
     else:
-        ns = Namespace(client=admin_client, name=name)
+        ns = Namespace(client=admin_client, name=operator_namespace)
         if not ns.exists:
             ns.deploy(wait=True)
 
     OperatorGroup(
         client=admin_client,
         name=name,
-        namespace=name,
+        namespace=operator_namespace,
         target_namespaces=target_namespaces,
     ).deploy(wait=True)
 
     subscription = Subscription(
         client=admin_client,
         name=name,
-        namespace=name,
+        namespace=operator_namespace,
         channel=channel,
         source=source,
         source_namespace="openshift-marketplace",
