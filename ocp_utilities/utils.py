@@ -47,7 +47,12 @@ def run_command(command, verify_stderr=True, shell=False, timeout=None):
 
 
 def run_ssh_commands(
-    host, commands, get_pty=False, check_rc=True, timeout=TIMEOUT_30MIN
+    host,
+    commands,
+    get_pty=False,
+    check_rc=True,
+    timeout=TIMEOUT_30MIN,
+    tcp_timeout=None,
 ):
     """
     Run commands via SSH
@@ -61,6 +66,7 @@ def run_ssh_commands(
         get_pty (bool): get_pty parameter for remote session (equivalent to -t argument for ssh)
         check_rc (bool): if True checks command return code and raises if rc != 0
         timeout (int): ssh exec timeout
+        tcp_timeout (float): an optional timeout (in seconds) for the TCP connect
 
     Returns:
         list: List of commands output.
@@ -70,7 +76,7 @@ def run_ssh_commands(
     """
     results = []
     commands = commands if isinstance(commands[0], list) else [commands]
-    with host.executor().session() as ssh_session:
+    with host.executor().session(timeout=tcp_timeout) as ssh_session:
         for cmd in commands:
             rc, out, err = ssh_session.run_cmd(
                 cmd=cmd, get_pty=get_pty, timeout=timeout
