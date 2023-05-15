@@ -50,4 +50,4 @@ def run_must_gather(
     if flag_names:
         flag_string = "".join([f" --{flag_name}" for flag_name in flag_names])
         base_command += f" {flag_string}"
-    return run_command(command=shlex.split(base_command))[1]
+    return run_command(command=shlex.split(base_command), check=False)[1]
