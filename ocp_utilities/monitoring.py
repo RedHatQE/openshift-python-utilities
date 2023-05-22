@@ -201,14 +201,14 @@ class Prometheus(object):
             func=self.query,
             query=query,
         )
+        sample = None
         try:
             for sample in sampler:
-                result = sample.get("data", {}).get("result")
-                if result and sample["status"] == "success":
-                    return result
+                if sample["status"] == "success":
+                    return sample.get("data", {}).get("result")
         except TimeoutExpiredError:
             LOGGER.error(
-                f"Failed to get successful status after executing query '{query}'"
+                f"Failed to get successful status after executing query '{query}'. Query result: {sample}"
             )
             raise
 
