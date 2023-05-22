@@ -182,7 +182,12 @@ def install_operator(
     )
 
 
-def uninstall_operator(admin_client, name, timeout=TIMEOUT_30MIN):
+def uninstall_operator(
+    admin_client,
+    name,
+    timeout=TIMEOUT_30MIN,
+    operator_namespace=None,
+):
     """
     Uninstall operator on cluster.
 
@@ -190,13 +195,15 @@ def uninstall_operator(admin_client, name, timeout=TIMEOUT_30MIN):
         admin_client (DynamicClient): Cluster client.
         name (str): Name of the operator to uninstall.
         timeout (int): Timeout in seconds to wait for operator to be uninstalled.
+        operator_namespace (str, optional): Operator namespace, if not provided, operator name will be used
     """
 
     csv_name = None
+    operator_namespace = operator_namespace or name
     subscription = Subscription(
         client=admin_client,
         name=name,
-        namespace=name,
+        namespace=operator_namespace,
     )
     if subscription.exists:
         csv_name = subscription.instance.status.installedCSV
@@ -205,13 +212,13 @@ def uninstall_operator(admin_client, name, timeout=TIMEOUT_30MIN):
     OperatorGroup(
         client=admin_client,
         name=name,
-        namespace=name,
+        namespace=operator_namespace,
     ).clean_up()
 
     for _operator in Operator.get(dyn_client=admin_client):
         if _operator.name.startswith(name):
             # operator name convention is <name>.<namespace>
-            namespace = name.split(".")[-1]
+            namespace = operator_namespace or name.split(".")[-1]
             ns = Namespace(client=admin_client, name=namespace)
             if ns.exists:
                 ns.clean_up()
