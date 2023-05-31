@@ -1,16 +1,19 @@
 from pprint import pformat
 
 from kubernetes.dynamic.exceptions import ResourceNotFoundError
+from ocp_resources.catalog_source import CatalogSource
 from ocp_resources.cluster_service_version import ClusterServiceVersion
+from ocp_resources.image_content_source_policy import ImageContentSourcePolicy
 from ocp_resources.installplan import InstallPlan
 from ocp_resources.namespace import Namespace
 from ocp_resources.operator import Operator
 from ocp_resources.operator_group import OperatorGroup
+from ocp_resources.resource import ResourceEditor
 from ocp_resources.subscription import Subscription
 from ocp_resources.utils import TimeoutExpiredError, TimeoutSampler
 from simple_logger.logger import get_logger
 
-from ocp_utilities.infra import cluster_resource
+from ocp_utilities.infra import cluster_resource, create_icsp, create_update_secret
 
 
 LOGGER = get_logger(name=__name__)
@@ -125,10 +128,12 @@ def install_operator(
     admin_client,
     name,
     channel,
-    source,
+    source=None,
     target_namespaces=None,
     timeout=TIMEOUT_30MIN,
     operator_namespace=None,
+    iib_index_image=None,
+    brew_token=None,
 ):
     """
     Install operator on cluster.
@@ -137,12 +142,30 @@ def install_operator(
         admin_client (DynamicClient): Cluster client.
         name (str): Name of the operator to install.
         channel (str): Channel to install operator from.
-        source (str): CatalogSource name.
+        source (str, optional): CatalogSource name.
         target_namespaces (list, optional): Target namespaces for the operator install process.
             If not provided, a namespace with te operator name will be created and used.
         timeout (int): Timeout in seconds to wait for operator to be ready.
-        operator_namespace (str, optional): Operator namespace, if not provided, operator name will be used
+        operator_namespace (str, optional): Operator namespace, if not provided, operator name will be used.
+        iib_index_image (str, optional): If provided install operator from iib index image.
+        brew_token (str, optional): Token to access iib index image registry.
     """
+    catalog_source = None
+    operator_market_namespace = "openshift-marketplace"
+
+    if iib_index_image:
+        if not brew_token:
+            raise ValueError("brew_token must be provided for iib_index_image")
+
+        catalog_source = create_catalog_source_for_iib_install(
+            name=name,
+            iib_index_image=iib_index_image,
+            brew_token=brew_token,
+            operator_market_namespace=operator_market_namespace,
+        )
+    else:
+        if not source:
+            raise ValueError("source must be provided if not using iib_index_image")
 
     operator_namespace = operator_namespace or name
     if target_namespaces:
@@ -170,8 +193,8 @@ def install_operator(
         name=name,
         namespace=operator_namespace,
         channel=channel,
-        source=source,
-        source_namespace="openshift-marketplace",
+        source=catalog_source.name if catalog_source else source,
+        source_namespace=operator_market_namespace,
         install_plan_approval="Automatic",
     )
     subscription.deploy(wait=True)
@@ -231,3 +254,63 @@ def uninstall_operator(
         )
 
         csv.wait_deleted(timeout=timeout)
+
+
+def create_catalog_source_for_iib_install(
+    name, iib_index_image, brew_token, operator_market_namespace
+):
+    """
+    Create ICSP and catalog source for given iib index image
+
+    Args:
+        name (str): Name for the catalog source (used in 'name, display_name and publisher').
+        iib_index_image (str): iib index image url.
+        brew_token (str): Token to access iib index image registry.
+        operator_market_namespace (str): Namespace of the marketplace.
+
+    Returns:
+        CatalogSource: catalog source object.
+    """
+    brew_registry = "brew.registry.redhat.io"
+    source_iib_registry = iib_index_image.split("/")[0]
+    _iib_index_image = iib_index_image.replace(source_iib_registry, brew_registry)
+    icsp = ImageContentSourcePolicy(name="brew-registry")
+    repository_digest_mirrors = [
+        {
+            "source": source_iib_registry,
+            "mirrors": [brew_registry],
+        }
+    ]
+
+    if icsp.exists:
+        ResourceEditor(
+            patches={
+                icsp: {
+                    "spec:": {"repository_digest_mirrors": repository_digest_mirrors}
+                }
+            }
+        ).update()
+    else:
+        create_icsp(
+            icsp_name="brew-registry",
+            repository_digest_mirrors=repository_digest_mirrors,
+        )
+
+    secret_data_dict = {"auths": {brew_registry: {"auth": brew_token}}}
+    create_update_secret(
+        secret_data_dict=secret_data_dict,
+        name="pull-secret",  # pragma: allowlist secret
+        namespace="openshift-config",
+    )
+
+    catalog_source = CatalogSource(
+        name=name,
+        namespace=operator_market_namespace,
+        display_name=name,
+        image=_iib_index_image,
+        publisher=name,
+        source_type="grpc",
+        update_strategy_registry_poll_interval="30m",
+    )
+    catalog_source.deploy(wait=True)
+    return catalog_source
