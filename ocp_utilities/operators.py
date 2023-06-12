@@ -147,7 +147,7 @@ def install_operator(
             If not provided, a namespace with te operator name will be created and used.
         timeout (int): Timeout in seconds to wait for operator to be ready.
         operator_namespace (str, optional): Operator namespace, if not provided, operator name will be used.
-        iib_index_image (str, optional): If provided install operator from iib index image.
+        iib_index_image (str, optional): iib index image url, If provided install operator from iib index image.
         brew_token (str, optional): Token to access iib index image registry.
     """
     catalog_source = None
@@ -158,7 +158,7 @@ def install_operator(
             raise ValueError("brew_token must be provided for iib_index_image")
 
         catalog_source = create_catalog_source_for_iib_install(
-            name=name,
+            name="iib-catalog",
             iib_index_image=iib_index_image,
             brew_token=brew_token,
             operator_market_namespace=operator_market_namespace,
@@ -279,7 +279,7 @@ def create_catalog_source_for_iib_install(
         {
             "source": source_iib_registry,
             "mirrors": [brew_registry],
-        }
+        },
     ]
 
     if icsp.exists:
