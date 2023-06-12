@@ -11,6 +11,7 @@ from ocp_resources.operator_group import OperatorGroup
 from ocp_resources.resource import ResourceEditor
 from ocp_resources.subscription import Subscription
 from ocp_resources.utils import TimeoutExpiredError, TimeoutSampler
+from ocp_resources.validating_webhook_config import ValidatingWebhookConfiguration
 from simple_logger.logger import get_logger
 
 from ocp_utilities.infra import cluster_resource, create_icsp, create_update_secret
@@ -271,30 +272,76 @@ def create_catalog_source_for_iib_install(
     Returns:
         CatalogSource: catalog source object.
     """
+
+    def _manipulate_validating_webhook_configuration(_validating_webhook_configuration):
+        _resource_name = "imagecontentsourcepolicies"
+        _validating_webhook_configuration_dict = (
+            _validating_webhook_configuration.instance.to_dict()
+        )
+        for webhook in _validating_webhook_configuration_dict["webhooks"]:
+            for rule in webhook["rules"]:
+                all_resources = rule["resources"]
+                for _resources in all_resources:
+                    if _resource_name in _resources:
+                        all_resources[all_resources.index(_resource_name)] = "nonexists"
+                        break
+
+        return _validating_webhook_configuration_dict
+
+    def _icsp(_repository_digest_mirrors):
+        if icsp.exists:
+            ResourceEditor(
+                patches={
+                    icsp: {
+                        "spec:": {
+                            "repository_digest_mirrors": _repository_digest_mirrors
+                        }
+                    }
+                }
+            ).update()
+        else:
+            create_icsp(
+                icsp_name="brew-registry",
+                repository_digest_mirrors=_repository_digest_mirrors,
+            )
+
     brew_registry = "brew.registry.redhat.io"
     source_iib_registry = iib_index_image.split("/")[0]
     _iib_index_image = iib_index_image.replace(source_iib_registry, brew_registry)
     icsp = ImageContentSourcePolicy(name="brew-registry")
+    validating_webhook_configuration = ValidatingWebhookConfiguration(
+        name="sre-imagecontentpolicies-validation"
+    )
     repository_digest_mirrors = [
         {
             "source": source_iib_registry,
             "mirrors": [brew_registry],
         },
+        {
+            "source": "registry.redhat.io",
+            "mirrors": [brew_registry],
+        },
     ]
 
-    if icsp.exists:
-        ResourceEditor(
+    if validating_webhook_configuration.exists:
+        # This is managed cluster, we need to disable ValidatingWebhookConfiguration rule
+        # for 'imagecontentsourcepolicies'
+        validating_webhook_configuration_dict = (
+            _manipulate_validating_webhook_configuration(
+                _validating_webhook_configuration=validating_webhook_configuration
+            )
+        )
+
+        with ResourceEditor(
             patches={
-                icsp: {
-                    "spec:": {"repository_digest_mirrors": repository_digest_mirrors}
+                validating_webhook_configuration: {
+                    "webhooks": validating_webhook_configuration_dict["webhooks"]
                 }
             }
-        ).update()
+        ):
+            _icsp(_repository_digest_mirrors=repository_digest_mirrors)
     else:
-        create_icsp(
-            icsp_name="brew-registry",
-            repository_digest_mirrors=repository_digest_mirrors,
-        )
+        _icsp(_repository_digest_mirrors=repository_digest_mirrors)
 
     secret_data_dict = {"auths": {brew_registry: {"auth": brew_token}}}
     create_update_secret(
