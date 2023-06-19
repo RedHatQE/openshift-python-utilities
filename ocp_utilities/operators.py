@@ -159,7 +159,7 @@ def install_operator(
             raise ValueError("brew_token must be provided for iib_index_image")
 
         catalog_source = create_catalog_source_for_iib_install(
-            name="iib-catalog",
+            name=f"iib-catalog-{name.lower()}",
             iib_index_image=iib_index_image,
             brew_token=brew_token,
             operator_market_namespace=operator_market_namespace,
