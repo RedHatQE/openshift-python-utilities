@@ -15,6 +15,7 @@ def run_must_gather(
     skip_tls_check=False,
     script_name=None,
     flag_names=None,
+    node_name=None,
 ):
     """
     Run must gather command with an option to create target directory.
@@ -31,6 +32,7 @@ def run_must_gather(
 
             Note: flag is optional parameter for must-gather. When it is not passed "--default" flag is used by
             must-gather. However, flag_names can not be passed without script_name
+        node_name (str, optional): Name of the node to run must-gather pod
 
     Returns:
         str: command output
@@ -40,6 +42,8 @@ def run_must_gather(
         base_command += f" --dest-dir={target_base_dir}"
     if image_url:
         base_command += f" --image={image_url}"
+    if node_name:
+        base_command += f" --node-name={node_name}"
     if skip_tls_check:
         base_command += " --insecure-skip-tls-verify"
     if kubeconfig:
