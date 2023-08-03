@@ -133,8 +133,7 @@ class Prometheus(object):
         """
         get all the firing alerts from list of active alerts
         """
-        alert_list = self.get_all_alerts_by_alert_name(alert_name=alert_name)
-        return [alert for alert in alert_list if alert["state"] == "firing"]
+        return self.get_alerts_by_state(alert_name=alert_name)
 
     def wait_for_firing_alert_sampler(self, alert_name, timeout=TIMEOUT_10MIN):
         """
@@ -150,21 +149,7 @@ class Prometheus(object):
         Raise:
              TimeoutExpiredError: if alert is not fired before wait_timeout
         """
-        sampler = TimeoutSampler(
-            wait_timeout=timeout,
-            sleep=self.scrape_interval,
-            func=self.get_firing_alerts,
-            alert_name=alert_name,
-        )
-        try:
-            for sample in sampler:
-                if sample:
-                    LOGGER.info(f"Found alert: {alert_name} in firing state.")
-                    return sample
-
-        except TimeoutExpiredError:
-            LOGGER.error(f"{alert_name} currently not in firing state")
-            raise
+        return self.wait_for_alert_by_state_sampler(alert_name=alert_name)
 
     def get_scrape_interval(self):
         """
@@ -217,3 +202,40 @@ class Prometheus(object):
         get all the active alerts
         """
         return self._get_response(query=f"{self.api_v1}/alerts")
+
+    def get_alerts_by_state(self, alert_name, state="firing"):
+        """
+        get all the alerts from list of active alerts according the state
+        """
+        alert_list = self.get_all_alerts_by_alert_name(alert_name=alert_name)
+        return [alert for alert in alert_list if alert["state"] == state]
+
+    def wait_for_alert_by_state_sampler(
+        self, alert_name, timeout=TIMEOUT_10MIN, state="firing"
+    ):
+        """
+        Sample output for an alert if found in the state provided in the args.
+
+        Args:
+             alert_name (str): alert name
+             timeout (int): wait time, default is 10 mins
+             state (str): state of the alert to expect, default is firing
+
+        Return:
+             sample (list): list of all alerts that match the alert name and in the state provided in args.
+
+        Raise:
+             TimeoutExpiredError: if alert is not in the state specified before wait_timeout
+        """
+        sampler = TimeoutSampler(
+            wait_timeout=timeout,
+            sleep=self.scrape_interval,
+            func=self.get_alerts_by_state,
+            alert_name=alert_name,
+            state=state,
+        )
+
+        for sample in sampler:
+            if sample:
+                LOGGER.info(f"Found alert: {alert_name} in {state} state.")
+                return sample
