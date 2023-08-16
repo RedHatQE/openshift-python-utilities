@@ -19,3 +19,4 @@ fcn_exclude_functions =
     subprocess,
     yaml,
     json,
+    urllib3,
