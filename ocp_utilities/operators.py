@@ -94,8 +94,19 @@ def wait_for_csv_successful_state(admin_client, subscription, timeout=TIMEOUT_10
         subscription (Subscription): Subscription instance.
         timeout (int): Timeout in seconds to wait for CSV to be ready.
     """
+
+    def _wait_for_subscription_installed_csv(_subscription):
+        LOGGER.info(f"Wait Subscription {_subscription.name} installedCSV.")
+        for sample in TimeoutSampler(
+            wait_timeout=30,
+            sleep=1,
+            func=lambda: _subscription.instance.status.installedCSV,
+        ):
+            if sample:
+                return sample
+
     csv = get_csv_by_name(
-        csv_name=subscription.instance.status.installedCSV,
+        csv_name=_wait_for_subscription_installed_csv(_subscription=subscription),
         admin_client=admin_client,
         namespace=subscription.namespace,
     )
