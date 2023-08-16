@@ -5,6 +5,7 @@ import os
 import shlex
 
 import kubernetes
+import urllib3
 from ocp_resources.image_content_source_policy import ImageContentSourcePolicy
 from ocp_resources.node import Node
 from ocp_resources.resource import ResourceEditor
@@ -23,6 +24,9 @@ from ocp_utilities.exceptions import (
     PodsFailedOrPendingError,
 )
 from ocp_utilities.utils import run_command
+
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 LOGGER = get_logger(name=__name__)
