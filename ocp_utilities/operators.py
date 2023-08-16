@@ -3,12 +3,14 @@ from pprint import pformat
 from kubernetes.dynamic.exceptions import ResourceNotFoundError
 from ocp_resources.catalog_source import CatalogSource
 from ocp_resources.cluster_service_version import ClusterServiceVersion
+from ocp_resources.cluster_version import ClusterVersion
 from ocp_resources.image_content_source_policy import ImageContentSourcePolicy
 from ocp_resources.installplan import InstallPlan
 from ocp_resources.namespace import Namespace
 from ocp_resources.operator import Operator
 from ocp_resources.operator_group import OperatorGroup
 from ocp_resources.resource import ResourceEditor
+from ocp_resources.service_account import ServiceAccount
 from ocp_resources.subscription import Subscription
 from ocp_resources.utils import TimeoutExpiredError, TimeoutSampler
 from ocp_resources.validating_webhook_config import ValidatingWebhookConfiguration
@@ -21,6 +23,7 @@ LOGGER = get_logger(name=__name__)
 TIMEOUT_5MIN = 5 * 60
 TIMEOUT_10MIN = 10 * 60
 TIMEOUT_30MIN = 30 * 60
+OPENSHIFT_MARKETPLACE_NS = "openshift-marketplace"
 
 
 def wait_for_install_plan_from_subscription(
@@ -152,7 +155,13 @@ def install_operator(
         brew_token (str, optional): Token to access iib index image registry.
     """
     catalog_source = None
-    operator_market_namespace = "openshift-marketplace"
+    operator_namespace = operator_namespace or name
+
+    prepare_operator_namespaces(
+        admin_client=admin_client,
+        operator_namespace=operator_namespace,
+        target_namespaces=target_namespaces,
+    )
 
     if iib_index_image:
         if not brew_token:
@@ -162,13 +171,60 @@ def install_operator(
             name=f"iib-catalog-{name.lower()}",
             iib_index_image=iib_index_image,
             brew_token=brew_token,
-            operator_market_namespace=operator_market_namespace,
+            operator_market_namespace=OPENSHIFT_MARKETPLACE_NS,
+            operator_namespace=operator_namespace,
         )
     else:
         if not source:
             raise ValueError("source must be provided if not using iib_index_image")
 
-    operator_namespace = operator_namespace or name
+    OperatorGroup(
+        client=admin_client,
+        name=name,
+        namespace=operator_namespace,
+        target_namespaces=target_namespaces,
+    ).deploy(wait=True)
+
+    subscription = deploy_subscription(
+        admin_client=admin_client,
+        catalog_source=catalog_source,
+        channel=channel,
+        name=name,
+        operator_market_namespace=OPENSHIFT_MARKETPLACE_NS,
+        operator_namespace=operator_namespace,
+        source=source,
+    )
+
+    wait_for_operator_install(
+        admin_client=admin_client,
+        subscription=subscription,
+        timeout=timeout,
+    )
+
+
+def deploy_subscription(
+    admin_client,
+    catalog_source,
+    channel,
+    name,
+    operator_market_namespace,
+    operator_namespace,
+    source,
+):
+    subscription = Subscription(
+        client=admin_client,
+        name=name,
+        namespace=operator_namespace,
+        channel=channel,
+        source=catalog_source.name if catalog_source else source,
+        source_namespace=operator_market_namespace,
+        install_plan_approval="Automatic",
+    )
+    subscription.deploy(wait=True)
+    return subscription
+
+
+def prepare_operator_namespaces(admin_client, operator_namespace, target_namespaces):
     if target_namespaces:
         for namespace in target_namespaces:
             ns = Namespace(client=admin_client, name=namespace)
@@ -181,29 +237,6 @@ def install_operator(
         ns = Namespace(client=admin_client, name=operator_namespace)
         if not ns.exists:
             ns.deploy(wait=True)
-
-    OperatorGroup(
-        client=admin_client,
-        name=name,
-        namespace=operator_namespace,
-        target_namespaces=target_namespaces,
-    ).deploy(wait=True)
-
-    subscription = Subscription(
-        client=admin_client,
-        name=name,
-        namespace=operator_namespace,
-        channel=channel,
-        source=catalog_source.name if catalog_source else source,
-        source_namespace=operator_market_namespace,
-        install_plan_approval="Automatic",
-    )
-    subscription.deploy(wait=True)
-    wait_for_operator_install(
-        admin_client=admin_client,
-        subscription=subscription,
-        timeout=timeout,
-    )
 
 
 def uninstall_operator(
@@ -258,7 +291,11 @@ def uninstall_operator(
 
 
 def create_catalog_source_for_iib_install(
-    name, iib_index_image, brew_token, operator_market_namespace
+    name,
+    iib_index_image,
+    brew_token,
+    operator_market_namespace,
+    operator_namespace=None,
 ):
     """
     Create ICSP and catalog source for given iib index image
@@ -268,12 +305,15 @@ def create_catalog_source_for_iib_install(
         iib_index_image (str): iib index image url.
         brew_token (str): Token to access iib index image registry.
         operator_market_namespace (str): Namespace of the marketplace.
+        operator_namespace (str, optional): Operator namespace, required for Hypershift clusters.
 
     Returns:
         CatalogSource: catalog source object.
     """
 
-    def _manipulate_validating_webhook_configuration(_validating_webhook_configuration):
+    def _manipulate_validating_webhook_configuration(
+        _validating_webhook_configuration, _hypershift
+    ):
         _resource_name = "imagecontentsourcepolicies"
         _validating_webhook_configuration_dict = (
             _validating_webhook_configuration.instance.to_dict()
@@ -285,6 +325,14 @@ def create_catalog_source_for_iib_install(
                     if _resource_name in _resources:
                         all_resources[all_resources.index(_resource_name)] = "nonexists"
                         break
+
+        if _hypershift:
+            owners = _validating_webhook_configuration_dict["metadata"]["annotations"][
+                "package-operator.run/owners"
+            ].replace('"controller":true', '"controller":false')
+            _validating_webhook_configuration_dict["metadata"]["annotations"][
+                "package-operator.run/owners"
+            ] = owners
 
         return _validating_webhook_configuration_dict
 
@@ -323,19 +371,29 @@ def create_catalog_source_for_iib_install(
         },
     ]
 
+    is_hypershift = (
+        ClusterVersion(name="version").labels.get("hypershift.openshift.io/managed")
+        == "true"
+    )
     if validating_webhook_configuration.exists:
         # This is managed cluster, we need to disable ValidatingWebhookConfiguration rule
         # for 'imagecontentsourcepolicies'
         validating_webhook_configuration_dict = (
             _manipulate_validating_webhook_configuration(
-                _validating_webhook_configuration=validating_webhook_configuration
+                _validating_webhook_configuration=validating_webhook_configuration,
+                _hypershift=is_hypershift,
             )
         )
 
         with ResourceEditor(
             patches={
                 validating_webhook_configuration: {
-                    "webhooks": validating_webhook_configuration_dict["webhooks"]
+                    "metadata": {
+                        "annotations": validating_webhook_configuration_dict[
+                            "metadata"
+                        ]["annotations"]
+                    },
+                    "webhooks": validating_webhook_configuration_dict["webhooks"],
                 }
             }
         ):
@@ -344,11 +402,25 @@ def create_catalog_source_for_iib_install(
         _icsp(_repository_digest_mirrors=repository_digest_mirrors)
 
     secret_data_dict = {"auths": {brew_registry: {"auth": brew_token}}}
+    pull_secret_name = (
+        "hypershift-pull-secret" if is_hypershift else "pull-secret"
+    )  # pragma: allowlist secret
+
     create_update_secret(
         secret_data_dict=secret_data_dict,
-        name="pull-secret",  # pragma: allowlist secret
-        namespace="openshift-config",
+        name=pull_secret_name,  # pragma: allowlist secret
+        namespace=OPENSHIFT_MARKETPLACE_NS if is_hypershift else "openshift-config",
     )
+    if is_hypershift:
+        default_sa = ServiceAccount(name="default", namespace=OPENSHIFT_MARKETPLACE_NS)
+        pull_secret_dict = {"name": pull_secret_name}
+        sa_secrets = default_sa.instance.secrets
+        sa_secrets.append(pull_secret_dict)
+        sa_images = default_sa.instance.imagePullSecrets
+        sa_images.append(pull_secret_dict)
+        ResourceEditor(
+            patches={default_sa: {"secrets": sa_secrets, "imagePullSecrets": sa_images}}
+        ).update()
 
     catalog_source = CatalogSource(
         name=name,
