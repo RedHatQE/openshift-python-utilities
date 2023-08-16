@@ -394,9 +394,7 @@ def create_update_secret(secret_data_dict, name, namespace):
     Returns:
         Secret: secret object with secret_data_dict content included
     """
-    secret = Secret(
-        name=name, namespace=namespace, type="kubernetes.io/dockerconfigjson"
-    )
+    secret = Secret(name=name, namespace=namespace)
     secret_key = ".dockerconfigjson"
     auths_key = "auths"
 
