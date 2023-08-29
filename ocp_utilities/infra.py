@@ -130,13 +130,15 @@ def assert_pods_failed_or_pending(pods):
             pod_status = pod.instance.status.phase
             if pod_status in [pod.Status.PENDING, pod.Status.FAILED]:
                 failed_or_pending_pods.append(
-                    f"name: {pod.name}, namespace: {pod.namespace}, status: {pod_status}\n"
+                    f"name: {pod.name}, namespace: {pod.namespace}, status:"
+                    f" {pod_status}\n"
                 )
 
     if failed_or_pending_pods:
         failed_or_pending_pods_str = "\t".join(map(str, failed_or_pending_pods))
         raise PodsFailedOrPendingError(
-            f"The following pods are failed or pending:\n\t{failed_or_pending_pods_str}",
+            "The following pods are failed or"
+            f" pending:\n\t{failed_or_pending_pods_str}",
         )
 
 
@@ -199,7 +201,8 @@ def assert_nodes_in_healthy_condition(
             indent=3,
         )
         raise NodesNotHealthyConditionError(
-            f"Following are nodes with unhealthy condition/s:\n{nodes_unhealthy_condition_error_str}"
+            "Following are nodes with unhealthy"
+            f" condition/s:\n{nodes_unhealthy_condition_error_str}"
         )
 
 
@@ -247,7 +250,8 @@ class DynamicClassCreator:
                         import_module = importlib.import_module(name=module_name)
                         collect_data_function = getattr(import_module, function_name)
                         LOGGER.info(
-                            f"[Data collector] Collecting data for {self.kind} {self.name}"
+                            "[Data collector] Collecting data for"
+                            f" {self.kind} {self.name}"
                         )
                         collect_data_function(
                             directory=data_collector_directory,
@@ -258,8 +262,8 @@ class DynamicClassCreator:
                         )
                 except Exception as exception_:
                     LOGGER.warning(
-                        f"[Data collector] failed to collect data for {self.kind} {self.name}\n"
-                        f"exception: {exception_}"
+                        "[Data collector] failed to collect data for"
+                        f" {self.kind} {self.name}\nexception: {exception_}"
                     )
                 super().clean_up()
 

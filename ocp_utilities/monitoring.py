@@ -193,7 +193,8 @@ class Prometheus(object):
                     return sample.get("data", {}).get("result")
         except TimeoutExpiredError:
             LOGGER.error(
-                f"Failed to get successful status after executing query '{query}'. Query result: {sample}"
+                f"Failed to get successful status after executing query '{query}'."
+                f" Query result: {sample}"
             )
             raise
 
