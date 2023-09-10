@@ -45,7 +45,6 @@ Download = "https://pypi.org/project/openshift-python-utilities/"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-openshift = "^0.13.2"
 colorlog = "^6.7.0"
 pytest = "^7.4.0"
 pytest-testconfig = "^0.2.0"
