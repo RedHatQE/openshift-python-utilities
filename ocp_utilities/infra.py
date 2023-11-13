@@ -223,9 +223,9 @@ class DynamicClassCreator:
                 super().__init__(*args, **kwargs)
 
             def _set_dynamic_class_creator_label(self):
-                self.res.setdefault("metadata", {}).setdefault("labels", {}).update(
-                    {"created-by-dynamic-class-creator": "Yes"}
-                )
+                self.res.setdefault("metadata", {}).setdefault("labels", {}).update({
+                    "created-by-dynamic-class-creator": "Yes"
+                })
 
             def to_dict(self):
                 if not self.res:
