@@ -54,8 +54,7 @@ def run_command(
     err_decoded = sub_process.stderr
 
     error_msg = (
-        f"Failed to run {command_for_log}. rc: {sub_process.returncode}, out:"
-        f" {out_decoded}, error: {err_decoded}"
+        f"Failed to run {command_for_log}. rc: {sub_process.returncode}, out:" f" {out_decoded}, error: {err_decoded}"
     )
 
     if sub_process.returncode != 0:
@@ -102,9 +101,7 @@ def run_ssh_commands(
     commands = commands if isinstance(commands[0], list) else [commands]
     with host.executor().session(timeout=tcp_timeout) as ssh_session:
         for cmd in commands:
-            rc, out, err = ssh_session.run_cmd(
-                cmd=cmd, get_pty=get_pty, timeout=timeout
-            )
+            rc, out, err = ssh_session.run_cmd(cmd=cmd, get_pty=get_pty, timeout=timeout)
             LOGGER.info(f"[SSH][{host.fqdn}] Executed: {' '.join(cmd)}")
             if rc and check_rc:
                 raise CommandExecFailed(name=cmd, err=err)

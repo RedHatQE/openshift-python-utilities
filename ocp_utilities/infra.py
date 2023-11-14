@@ -51,17 +51,13 @@ def get_client(config_file=None, config_dict=None, context=None, **kwargs):
     # Ref: https://github.com/kubernetes-client/python/blob/v26.1.0/kubernetes/base/config/kube_config.py
     if config_dict:
         return kubernetes.dynamic.DynamicClient(
-            client=kubernetes.config.new_client_from_config_dict(
-                config_dict=config_dict, context=context, **kwargs
-            )
+            client=kubernetes.config.new_client_from_config_dict(config_dict=config_dict, context=context, **kwargs)
         )
     try:
         # Ref: https://github.com/kubernetes-client/python/blob/v26.1.0/kubernetes/base/config/__init__.py
         LOGGER.info("Trying to get client via new_client_from_config")
         return kubernetes.dynamic.DynamicClient(
-            client=kubernetes.config.new_client_from_config(
-                config_file=config_file, context=context, **kwargs
-            )
+            client=kubernetes.config.new_client_from_config(config_file=config_file, context=context, **kwargs)
         )
     except MaxRetryError:
         # Ref: https://github.com/kubernetes-client/python/blob/v26.1.0/kubernetes/base/config/incluster_config.py
@@ -87,9 +83,7 @@ def assert_nodes_ready(nodes):
     LOGGER.info("Verify all nodes are ready.")
     not_ready_nodes = [node.name for node in nodes if not node.kubelet_ready]
     if not_ready_nodes:
-        raise NodeNotReadyError(
-            f"Following nodes are not in ready state: {not_ready_nodes}"
-        )
+        raise NodeNotReadyError(f"Following nodes are not in ready state: {not_ready_nodes}")
 
 
 def assert_nodes_schedulable(nodes):
@@ -103,13 +97,9 @@ def assert_nodes_schedulable(nodes):
         NodeUnschedulableError: Asserts on node(s) not schedulable
     """
     LOGGER.info("Verify all nodes are schedulable.")
-    unschedulable_nodes = [
-        node.name for node in nodes if node.instance.spec.unschedulable
-    ]
+    unschedulable_nodes = [node.name for node in nodes if node.instance.spec.unschedulable]
     if unschedulable_nodes:
-        raise NodeUnschedulableError(
-            f"Following nodes are in unscheduled state: {unschedulable_nodes}"
-        )
+        raise NodeUnschedulableError(f"Following nodes are in unscheduled state: {unschedulable_nodes}")
 
 
 def assert_pods_failed_or_pending(pods):
@@ -130,15 +120,13 @@ def assert_pods_failed_or_pending(pods):
             pod_status = pod.instance.status.phase
             if pod_status in [pod.Status.PENDING, pod.Status.FAILED]:
                 failed_or_pending_pods.append(
-                    f"name: {pod.name}, namespace: {pod.namespace}, status:"
-                    f" {pod_status}\n"
+                    f"name: {pod.name}, namespace: {pod.namespace}, status:" f" {pod_status}\n"
                 )
 
     if failed_or_pending_pods:
         failed_or_pending_pods_str = "\t".join(map(str, failed_or_pending_pods))
         raise PodsFailedOrPendingError(
-            "The following pods are failed or"
-            f" pending:\n\t{failed_or_pending_pods_str}",
+            "The following pods are failed or" f" pending:\n\t{failed_or_pending_pods_str}",
         )
 
 
@@ -179,9 +167,7 @@ def assert_nodes_in_healthy_condition(
         }
 
     if not isinstance(healthy_node_condition_type, dict):
-        raise TypeError(
-            f"A dict is required but got type {type(healthy_node_condition_type)}"
-        )
+        raise TypeError(f"A dict is required but got type {type(healthy_node_condition_type)}")
 
     unhealthy_nodes_with_conditions = {}
     for node in nodes:
@@ -201,8 +187,7 @@ def assert_nodes_in_healthy_condition(
             indent=3,
         )
         raise NodesNotHealthyConditionError(
-            "Following are nodes with unhealthy"
-            f" condition/s:\n{nodes_unhealthy_condition_error_str}"
+            "Following are nodes with unhealthy" f" condition/s:\n{nodes_unhealthy_condition_error_str}"
         )
 
 
@@ -223,9 +208,9 @@ class DynamicClassCreator:
                 super().__init__(*args, **kwargs)
 
             def _set_dynamic_class_creator_label(self):
-                self.res.setdefault("metadata", {}).setdefault("labels", {}).update({
-                    "created-by-dynamic-class-creator": "Yes"
-                })
+                self.res.setdefault("metadata", {}).setdefault("labels", {}).update(
+                    {"created-by-dynamic-class-creator": "Yes"}
+                )
 
             def to_dict(self):
                 if not self.res:
@@ -237,28 +222,17 @@ class DynamicClassCreator:
                 try:
                     data_collector_dict = get_data_collector_dict()
                     if data_collector_dict:
-                        data_collector_directory = get_data_collector_base_dir(
-                            data_collector_dict=data_collector_dict
-                        )
+                        data_collector_directory = get_data_collector_base_dir(data_collector_dict=data_collector_dict)
 
-                        collect_data_function = data_collector_dict[
-                            "collect_data_function"
-                        ]
-                        module_name, function_name = collect_data_function.rsplit(
-                            ".", 1
-                        )
+                        collect_data_function = data_collector_dict["collect_data_function"]
+                        module_name, function_name = collect_data_function.rsplit(".", 1)
                         import_module = importlib.import_module(name=module_name)
                         collect_data_function = getattr(import_module, function_name)
-                        LOGGER.info(
-                            "[Data collector] Collecting data for"
-                            f" {self.kind} {self.name}"
-                        )
+                        LOGGER.info("[Data collector] Collecting data for" f" {self.kind} {self.name}")
                         collect_data_function(
                             directory=data_collector_directory,
                             resource_object=self,
-                            collect_pod_logs=data_collector_dict.get(
-                                "collect_pod_logs", False
-                            ),
+                            collect_pod_logs=data_collector_dict.get("collect_pod_logs", False),
                         )
                 except Exception as exception_:
                     LOGGER.warning(
@@ -305,9 +279,7 @@ def cluster_resource(base_class):
     return creator(base_class=base_class)
 
 
-def create_icsp_command(
-    image, source_url, folder_name, pull_secret=None, filter_options=""
-):
+def create_icsp_command(image, source_url, folder_name, pull_secret=None, filter_options=""):
     """
         Create ImageContentSourcePolicy command.
 
@@ -322,17 +294,14 @@ def create_icsp_command(
         str: base command to create icsp in the cluster.
     """
     base_command = (
-        f"oc adm catalog mirror {image} {source_url} --manifests-only "
-        f"--to-manifests {folder_name} {filter_options}"
+        f"oc adm catalog mirror {image} {source_url} --manifests-only " f"--to-manifests {folder_name} {filter_options}"
     )
     if pull_secret:
         base_command = f"{base_command} --registry-config={pull_secret}"
     return base_command
 
 
-def generate_icsp_file(
-    folder_name, image, source_url, pull_secret=None, filter_options=""
-):
+def generate_icsp_file(folder_name, image, source_url, pull_secret=None, filter_options=""):
     base_command = create_icsp_command(
         image=image,
         source_url=source_url,
@@ -346,9 +315,7 @@ def generate_icsp_file(
     )[0]
 
     icsp_file_path = os.path.join(folder_name, "ImageContentSourcePolicy.yaml")
-    assert os.path.isfile(
-        icsp_file_path
-    ), f"ICSP file does not exist in path {icsp_file_path}"
+    assert os.path.isfile(icsp_file_path), f"ICSP file does not exist in path {icsp_file_path}"
 
     return icsp_file_path
 
@@ -360,9 +327,7 @@ def create_icsp_from_file(icsp_file_path):
 
 
 def create_icsp(icsp_name, repository_digest_mirrors):
-    icsp = ImageContentSourcePolicy(
-        name=icsp_name, repository_digest_mirrors=repository_digest_mirrors
-    )
+    icsp = ImageContentSourcePolicy(name=icsp_name, repository_digest_mirrors=repository_digest_mirrors)
     icsp.deploy()
     return icsp
 
@@ -407,17 +372,11 @@ def create_update_secret(secret_data_dict, name, namespace):
     auths_key = "auths"
 
     if secret.exists:
-        old_secret_data_dict = json.loads(
-            base64.b64decode(secret.instance.data[secret_key])
-        )[auths_key]
+        old_secret_data_dict = json.loads(base64.b64decode(secret.instance.data[secret_key]))[auths_key]
         old_secret_data_dict.update(secret_data_dict[auths_key])
-        secret_data_encoded = dict_base64_encode(
-            _dict={auths_key: old_secret_data_dict}
-        )
+        secret_data_encoded = dict_base64_encode(_dict={auths_key: old_secret_data_dict})
 
-        ResourceEditor(
-            patches={secret: {"data": {secret_key: secret_data_encoded}}}
-        ).update()
+        ResourceEditor(patches={secret: {"data": {secret_key: secret_data_encoded}}}).update()
 
         return secret
 

@@ -16,6 +16,4 @@ class WebDebugger(WebPdb):
     """
 
     def __init__(self):
-        super().__init__(
-            host="0.0.0.0", port=int(os.environ.get("PYTHON_REMOTE_DEBUG_PORT", 1212))
-        )
+        super().__init__(host="0.0.0.0", port=int(os.environ.get("PYTHON_REMOTE_DEBUG_PORT", 1212)))

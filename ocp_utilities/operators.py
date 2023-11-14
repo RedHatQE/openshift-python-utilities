@@ -23,9 +23,7 @@ TIMEOUT_10MIN = 10 * 60
 TIMEOUT_30MIN = 30 * 60
 
 
-def wait_for_install_plan_from_subscription(
-    admin_client, subscription, timeout=TIMEOUT_5MIN
-):
+def wait_for_install_plan_from_subscription(admin_client, subscription, timeout=TIMEOUT_5MIN):
     """
     Wait for InstallPlan from Subscription.
 
@@ -41,9 +39,7 @@ def wait_for_install_plan_from_subscription(
         TimeoutExpiredError: If timeout reached.
 
     """
-    LOGGER.info(
-        f"Wait for install plan to be created for subscription {subscription.name}."
-    )
+    LOGGER.info(f"Wait for install plan to be created for subscription {subscription.name}.")
     install_plan_sampler = TimeoutSampler(
         wait_timeout=timeout,
         sleep=30,
@@ -60,8 +56,7 @@ def wait_for_install_plan_from_subscription(
                 )
     except TimeoutExpiredError:
         LOGGER.error(
-            f"Subscription: {subscription.name}, did not get updated with install plan:"
-            f" {pformat(subscription)}"
+            f"Subscription: {subscription.name}, did not get updated with install plan:" f" {pformat(subscription)}"
         )
         raise
 
@@ -75,9 +70,7 @@ def wait_for_operator_install(admin_client, subscription, timeout=TIMEOUT_5MIN):
         subscription (Subscription): Subscription instance.
         timeout (int): Timeout in seconds to wait for operator to be installed.
     """
-    install_plan = wait_for_install_plan_from_subscription(
-        admin_client=admin_client, subscription=subscription
-    )
+    install_plan = wait_for_install_plan_from_subscription(admin_client=admin_client, subscription=subscription)
     install_plan.wait_for_status(status=install_plan.Status.COMPLETE, timeout=timeout)
     wait_for_csv_successful_state(
         admin_client=admin_client,
@@ -128,9 +121,7 @@ def get_csv_by_name(admin_client, csv_name, namespace):
     Raises:
         NotFoundError: when a given CSV is not found in a given namespace
     """
-    csv = cluster_resource(ClusterServiceVersion)(
-        client=admin_client, namespace=namespace, name=csv_name
-    )
+    csv = cluster_resource(ClusterServiceVersion)(client=admin_client, namespace=namespace, name=csv_name)
     if csv.exists:
         return csv
     raise ResourceNotFoundError(f"CSV {csv_name} not found in namespace: {namespace}")
@@ -268,9 +259,7 @@ def uninstall_operator(
         csv.wait_deleted(timeout=timeout)
 
 
-def create_catalog_source_for_iib_install(
-    name, iib_index_image, brew_token, operator_market_namespace
-):
+def create_catalog_source_for_iib_install(name, iib_index_image, brew_token, operator_market_namespace):
     """
     Create ICSP and catalog source for given iib index image
 
@@ -286,9 +275,7 @@ def create_catalog_source_for_iib_install(
 
     def _manipulate_validating_webhook_configuration(_validating_webhook_configuration):
         _resource_name = "imagecontentsourcepolicies"
-        _validating_webhook_configuration_dict = (
-            _validating_webhook_configuration.instance.to_dict()
-        )
+        _validating_webhook_configuration_dict = _validating_webhook_configuration.instance.to_dict()
         for webhook in _validating_webhook_configuration_dict["webhooks"]:
             for rule in webhook["rules"]:
                 all_resources = rule["resources"]
@@ -302,13 +289,7 @@ def create_catalog_source_for_iib_install(
     def _icsp(_repository_digest_mirrors):
         if icsp.exists:
             ResourceEditor(
-                patches={
-                    icsp: {
-                        "spec:": {
-                            "repository_digest_mirrors": _repository_digest_mirrors
-                        }
-                    }
-                }
+                patches={icsp: {"spec:": {"repository_digest_mirrors": _repository_digest_mirrors}}}
             ).update()
         else:
             create_icsp(
@@ -320,9 +301,7 @@ def create_catalog_source_for_iib_install(
     source_iib_registry = iib_index_image.split("/")[0]
     _iib_index_image = iib_index_image.replace(source_iib_registry, brew_registry)
     icsp = ImageContentSourcePolicy(name="brew-registry")
-    validating_webhook_configuration = ValidatingWebhookConfiguration(
-        name="sre-imagecontentpolicies-validation"
-    )
+    validating_webhook_configuration = ValidatingWebhookConfiguration(name="sre-imagecontentpolicies-validation")
     repository_digest_mirrors = [
         {
             "source": source_iib_registry,
@@ -337,18 +316,12 @@ def create_catalog_source_for_iib_install(
     if validating_webhook_configuration.exists:
         # This is managed cluster, we need to disable ValidatingWebhookConfiguration rule
         # for 'imagecontentsourcepolicies'
-        validating_webhook_configuration_dict = (
-            _manipulate_validating_webhook_configuration(
-                _validating_webhook_configuration=validating_webhook_configuration
-            )
+        validating_webhook_configuration_dict = _manipulate_validating_webhook_configuration(
+            _validating_webhook_configuration=validating_webhook_configuration
         )
 
         with ResourceEditor(
-            patches={
-                validating_webhook_configuration: {
-                    "webhooks": validating_webhook_configuration_dict["webhooks"]
-                }
-            }
+            patches={validating_webhook_configuration: {"webhooks": validating_webhook_configuration_dict["webhooks"]}}
         ):
             _icsp(_repository_digest_mirrors=repository_digest_mirrors)
     else:

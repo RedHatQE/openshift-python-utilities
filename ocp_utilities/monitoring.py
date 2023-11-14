@@ -50,9 +50,7 @@ class Prometheus(object):
     def _get_route(self):
         # get route to prometheus HTTP api
         LOGGER.info("Prometheus: Obtaining route")
-        route = Route(
-            namespace=self.namespace, name=self.resource_name, client=self.client
-        ).instance.spec.host
+        route = Route(namespace=self.namespace, name=self.resource_name, client=self.client).instance.spec.host
 
         return f"https://{route}"
 
@@ -70,9 +68,7 @@ class Prometheus(object):
     def _get_service_account(self):
         """get service account  for the given namespace and resource"""
 
-        return ServiceAccount(
-            namespace=self.namespace, name=self.resource_name, client=self.client
-        )
+        return ServiceAccount(namespace=self.namespace, name=self.resource_name, client=self.client)
 
     def _get_resource_secret(self):
         """secret for the service account extracted"""
@@ -84,9 +80,7 @@ class Prometheus(object):
         )
 
     def _get_response(self, query):
-        response = requests.get(
-            f"{self.api_url}{query}", headers=self.headers, verify=self.verify_ssl
-        )
+        response = requests.get(f"{self.api_url}{query}", headers=self.headers, verify=self.verify_ssl)
 
         try:
             return json.loads(response.content)
@@ -192,10 +186,7 @@ class Prometheus(object):
                 if sample["status"] == "success":
                     return sample.get("data", {}).get("result")
         except TimeoutExpiredError:
-            LOGGER.error(
-                f"Failed to get successful status after executing query '{query}'."
-                f" Query result: {sample}"
-            )
+            LOGGER.error(f"Failed to get successful status after executing query '{query}'." f" Query result: {sample}")
             raise
 
     def alerts(self):
@@ -211,9 +202,7 @@ class Prometheus(object):
         alert_list = self.get_all_alerts_by_alert_name(alert_name=alert_name)
         return [alert for alert in alert_list if alert["state"] == state]
 
-    def wait_for_alert_by_state_sampler(
-        self, alert_name, timeout=TIMEOUT_10MIN, state="firing"
-    ):
+    def wait_for_alert_by_state_sampler(self, alert_name, timeout=TIMEOUT_10MIN, state="firing"):
         """
         Sample output for an alert if found in the state provided in the args.
 
