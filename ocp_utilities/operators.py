@@ -10,7 +10,7 @@ from ocp_resources.operator import Operator
 from ocp_resources.operator_group import OperatorGroup
 from ocp_resources.resource import ResourceEditor
 from ocp_resources.subscription import Subscription
-from ocp_resources.utils import TimeoutExpiredError, TimeoutSampler
+from timeout_sampler import TimeoutExpiredError, TimeoutSampler
 from ocp_resources.validating_webhook_config import ValidatingWebhookConfiguration
 from simple_logger.logger import get_logger
 from ocp_utilities.must_gather import collect_must_gather

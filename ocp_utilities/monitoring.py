@@ -6,7 +6,7 @@ import requests
 from ocp_resources.route import Route
 from ocp_resources.secret import Secret
 from ocp_resources.service_account import ServiceAccount
-from ocp_resources.utils import TimeoutExpiredError, TimeoutSampler
+from timeout_sampler import TimeoutExpiredError, TimeoutSampler
 from simple_logger.logger import get_logger
 
 from ocp_utilities.infra import get_client

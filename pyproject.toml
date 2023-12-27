@@ -42,6 +42,7 @@ pytest-testconfig = "^0.2.0"
 pyyaml = "^6.0.1"
 openshift-python-wrapper-data-collector = "^1.0.4"
 python-simple-logger = "^1.0.5"
+timeout-sampler = "^0.0.1"
 
 [tool.poetry.group.dev.dependencies]
 ipdb = "^0.13.13"
