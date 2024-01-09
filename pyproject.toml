@@ -18,13 +18,13 @@ description = "A utilities repository for https://github.com/RedHatQE/openshift-
 authors = ["Meni Yakove <myakove@gmail.com>", "Ruth Netser <rnetser@gmail.com>"]
 readme = "README.md"
 license = "Apache-2.0"
-packages = [{include = "ocp_utilities"}]
+packages = [{ include = "ocp_utilities" }]
 homepage = "https://github.com/RedHatQE/openshift-python-utilities"
 documentation = "https://github.com/RedHatQE/openshift-python-utilities/blob/main/README.md"
 keywords = ["Openshift", "ocp"]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
 ]
 
 [tool.poetry-dynamic-versioning.substitution]
@@ -40,9 +40,9 @@ colorlog = "^6.7.0"
 pytest = "^7.4.0"
 pytest-testconfig = "^0.2.0"
 pyyaml = "^6.0.1"
-openshift-python-wrapper-data-collector = "^1.0.4"
-python-simple-logger = "^1.0.5"
-timeout-sampler = "^0.0.1"
+openshift-python-wrapper-data-collector = "*"
+python-simple-logger = "*"
+timeout-sampler = "*"
 
 [tool.poetry.group.dev.dependencies]
 ipdb = "^0.13.13"
