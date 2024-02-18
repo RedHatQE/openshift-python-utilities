@@ -22,3 +22,6 @@ fcn_exclude_functions =
     yaml,
     json,
     urllib3,
+    Version,
+    soup,
+    BeautifulSoup,
