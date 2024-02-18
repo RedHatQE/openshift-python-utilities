@@ -20,6 +20,23 @@ def parse_openshift_release_url():
 
 @functools.cache
 def get_accepted_cluster_versions():
+    """
+    Get all accepted cluster versions from https://openshift-release.apps.ci.l2s4.p1.openshiftapps.com
+
+    Returns:
+        dict: Accepted cluster versions
+
+    Examples:
+        >>> get_accepted_cluster_versions()
+        {'stable': {'4.15': ['4.15.0', '4.15.0-0.ci-2022-05-25-113430']},
+         'nightly': {'4.15': ['4.15.0-0.nightly-2022-05-25-113430']},
+         'ci': {'4.15': ['4.15.0-0.ci-2022-05-25-113430']},
+         'ec': {'4.15': ['4.15.0-0.ci-2022-05-25-113430']},
+         'rc': {'4.15': ['4.15.0-0.ci-2022-05-25-113430']},
+         'fc': {'4.15': ['4.15.0-0.ci-2022-05-25-113430']}}
+
+
+    """
     _accepted_version_dict = {}
     for tr in parse_openshift_release_url():
         version, status = [_tr for _tr in tr.text.splitlines() if _tr][:2]
@@ -40,7 +57,3 @@ def get_accepted_cluster_versions():
                 _accepted_version_dict.setdefault("stable", {}).setdefault(base_version, []).append(version)
 
     return _accepted_version_dict
-
-
-if __name__ == "__main__":
-    ver = get_accepted_cluster_versions()
