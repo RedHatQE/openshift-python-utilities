@@ -41,8 +41,7 @@ def get_accepted_cluster_versions():
         if status == "Accepted":
             semver_version = Version.parse(version.strip("*").strip())
             base_version = f"{semver_version.major}.{semver_version.minor}"
-            pre_release = semver_version.prerelease
-            if pre_release:
+            if pre_release := semver_version.prerelease:
                 if "nightly" in pre_release:
                     _accepted_version_dict.setdefault("nightly", {}).setdefault(base_version, []).append(version)
                 elif "ci" in pre_release:
