@@ -47,6 +47,7 @@ def get_accepted_cluster_versions():
                 elif "ci" in pre_release:
                     _accepted_version_dict.setdefault("ci", {}).setdefault(base_version, []).append(version)
                 else:
+                    # Handle ec, fc and rc (pre_release text is rc.1 or ec.1 or fc.1)
                     _accepted_version_dict.setdefault(pre_release.split(".")[0], {}).setdefault(
                         base_version, []
                     ).append(version)
