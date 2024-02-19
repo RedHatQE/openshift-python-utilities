@@ -23,5 +23,5 @@ fcn_exclude_functions =
     json,
     urllib3,
     Version,
-    soup,
+    find_all,
     BeautifulSoup,
