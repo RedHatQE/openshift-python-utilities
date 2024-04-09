@@ -152,7 +152,7 @@ class Prometheus(object):
         Raise:
              TimeoutExpiredError: if alert is not fired before wait_timeout
         """
-        return self.wait_for_alert_by_state_sampler(alert_name=alert_name)
+        return self.wait_for_alert_by_state_sampler(alert_name=alert_name, timeout=timeout)
 
     def get_scrape_interval(self):
         """
