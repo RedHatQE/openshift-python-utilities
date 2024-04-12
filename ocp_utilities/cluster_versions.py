@@ -16,7 +16,7 @@ LOGGER = get_logger(name="ocp-versions")
 def parse_openshift_release_url():
     url = "https://openshift-release.apps.ci.l2s4.p1.openshiftapps.com"
     LOGGER.info(f"Parsing {url}")
-    req = requests.get(url)
+    req = requests.get(url, headers={"Cache-Control": "no-cache"})
     soup = BeautifulSoup(req.text, "html.parser")
     return soup.find_all("tr")
 
