@@ -30,8 +30,8 @@ def get_accepted_cluster_versions():
         dict: Accepted cluster versions
             Key is the release controller stream:
                 `stable` includes official image versions in x.y.z in any OpenShift release channel (candidate, fast or stable)
-                `ci` includes CI image builds of release-x.y (master) branches, and is updated on each merge
-                `nightly` includes official image builds of release-x.y (master) branches,
+                `ci` includes CI image builds of release-x.y (main) branches, and is updated on each merge
+                `nightly` includes official image builds of release-x.y (main) branches,
                     and is updated after those builds are synced to quay.io
                 `ec` includes official image builds in x.y.0-ec.x of OpenShift Dev Preview
                 `rc` includes official image builds in x.y.0-rc.x of OpenShift Release Candidate
