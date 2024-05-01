@@ -3,22 +3,21 @@ import shutil
 from pathlib import Path
 import os
 
+from pyhelper_utils.shell import run_command
 from simple_logger.logger import get_logger
-
-from ocp_utilities.utils import run_command
 
 
 LOGGER = get_logger(name=__name__)
 
 
 def run_must_gather(
-    image_url=None,
-    target_base_dir=None,
-    kubeconfig=None,
-    skip_tls_check=False,
-    script_name=None,
-    flag_names=None,
-):
+    image_url: str = "",
+    target_base_dir: str = "",
+    kubeconfig: str = "",
+    skip_tls_check: bool = False,
+    script_name: str = "",
+    flag_names: str = "",
+) -> str:
     """
     Run must gather command with an option to create target directory.
 
@@ -56,7 +55,9 @@ def run_must_gather(
     return run_command(command=shlex.split(base_command), check=False)[1]
 
 
-def collect_must_gather(must_gather_output_dir, cluster_name, product_name, kubeconfig_path=None):
+def collect_must_gather(
+    must_gather_output_dir: str, cluster_name: str, product_name: str, kubeconfig_path: str = ""
+) -> None:
     """
     Run must-gather for specified cluster.
 

@@ -1,8 +1,11 @@
+from __future__ import annotations
 import json
 import re
 from json import JSONDecodeError
+from typing import Any, Dict, List
 
 import requests
+from kubernetes.dynamic import DynamicClient
 from ocp_resources.route import Route
 from ocp_resources.secret import Secret
 from ocp_resources.service_account import ServiceAccount
@@ -33,12 +36,12 @@ class Prometheus(object):
 
     def __init__(
         self,
-        namespace="openshift-monitoring",
-        resource_name="prometheus-k8s",
-        client=None,
-        verify_ssl=True,
-        bearer_token=None,
-    ):
+        namespace: str = "openshift-monitoring",
+        resource_name: str = "prometheus-k8s",
+        client: DynamicClient = None,
+        verify_ssl: bool = True,
+        bearer_token: str = "",
+    ) -> None:
         """
         Args:
             namespace (str): Prometheus API resource namespace
@@ -57,14 +60,14 @@ class Prometheus(object):
         self.headers = self._get_headers()
         self.scrape_interval = self.get_scrape_interval()
 
-    def _get_route(self):
+    def _get_route(self) -> str:
         # get route to prometheus HTTP api
         LOGGER.info("Prometheus: Obtaining route")
         route = Route(namespace=self.namespace, name=self.resource_name, client=self.client).instance.spec.host
 
         return f"https://{route}"
 
-    def _get_headers(self):
+    def _get_headers(self) -> Dict[str, str]:
         """Uses the Prometheus serviceaccount to get an access token for OAuth if not given"""
         LOGGER.info("Setting Prometheus headers and Obtaining OAuth token")
 
@@ -74,12 +77,12 @@ class Prometheus(object):
 
         return {"Authorization": f"Bearer {self.bearer_token}"}
 
-    def _get_service_account(self):
+    def _get_service_account(self) -> ServiceAccount:
         """get service account  for the given namespace and resource"""
 
         return ServiceAccount(namespace=self.namespace, name=self.resource_name, client=self.client)
 
-    def _get_resource_secret(self):
+    def _get_resource_secret(self) -> Secret:
         """secret for the service account extracted"""
         resource_sa = self._get_service_account()
         return Secret(
@@ -88,7 +91,7 @@ class Prometheus(object):
             client=self.client,
         )
 
-    def _get_response(self, query):
+    def _get_response(self, query: str) -> Dict[str, Any]:
         response = requests.get(f"{self.api_url}{query}", headers=self.headers, verify=self.verify_ssl)
 
         try:
@@ -96,11 +99,11 @@ class Prometheus(object):
         except JSONDecodeError as json_exception:
             LOGGER.error(
                 "Exception converting query response to JSON: "
-                f"exc={json_exception} response_status_code={response.status_code} response={response.content}"
+                f"exc={json_exception} response_status_code={response.status_code} response={response.content.decode()}"
             )
             raise
 
-    def query(self, query):
+    def query(self, query: str) -> Dict[str, Any]:
         """
         get the prometheus query result
 
@@ -112,12 +115,12 @@ class Prometheus(object):
         """
         return self._get_response(query=f"{self.api_v1}/query?query={query}")
 
-    def get_all_alerts_by_alert_name(self, alert_name):
+    def get_all_alerts_by_alert_name(self, alert_name: str) -> List[Dict[str, Any]]:
         """
         Get alert by alert name if it's an active alert
 
         Args:
-             alert (str): alert name
+             alert_name (str): alert name
 
         Examples:
              result = prometheus.get_alert(alert='WatchDog')
@@ -132,18 +135,18 @@ class Prometheus(object):
                 alert_list.append(alert)
         return alert_list
 
-    def get_firing_alerts(self, alert_name):
+    def get_firing_alerts(self, alert_name: str) -> List[Dict[str, Any]]:
         """
         get all the firing alerts from list of active alerts
         """
         return self.get_alerts_by_state(alert_name=alert_name)
 
-    def wait_for_firing_alert_sampler(self, alert_name, timeout=TIMEOUT_10MIN):
+    def wait_for_firing_alert_sampler(self, alert_name: str, timeout: int = TIMEOUT_10MIN) -> Any:
         """
         Sample output for an alert if found in fired state
 
         Args:
-             alert (str): alert name
+             alert_name (str): alert name
              timeout (int): wait time, default is 10 mins
 
         Return:
@@ -154,7 +157,7 @@ class Prometheus(object):
         """
         return self.wait_for_alert_by_state_sampler(alert_name=alert_name, timeout=timeout)
 
-    def get_scrape_interval(self):
+    def get_scrape_interval(self) -> int:
         """
         get prometheus scrap interval
 
@@ -166,16 +169,18 @@ class Prometheus(object):
         for item in result:
             if item and item["labels"]["job"] == "prometheus-k8s":
                 scrape_interval = item["scrapeInterval"]
-                return int((re.match(r"\d+", scrape_interval)).group())
+                if scrape_interval_match := re.match(r"\d+", scrape_interval):
+                    return int(scrape_interval_match.group())
+
         return 30
 
-    def query_sampler(self, query, timeout=TIMEOUT_2MIN):
+    def query_sampler(self, query: str, timeout: int = TIMEOUT_2MIN) -> List[Any]:
         """
         Sample output for query function
 
         Args:
              query (str): prometheus query string
-             wait_timeout (int): default is 2 mins
+             timeout (int): default is 2 mins
 
         Return:
              list: return the query result
@@ -183,35 +188,39 @@ class Prometheus(object):
         Raise:
              TimeoutExpiredError: if query response doesn't return success
         """
-        sampler = TimeoutSampler(
-            wait_timeout=timeout,
-            sleep=self.scrape_interval,
-            func=self.query,
-            query=query,
-        )
         sample = None
         try:
-            for sample in sampler:
+            for sample in TimeoutSampler(
+                wait_timeout=timeout,
+                sleep=self.scrape_interval,
+                func=self.query,
+                query=query,
+            ):
                 if sample["status"] == "success":
-                    return sample.get("data", {}).get("result")
+                    return sample.get("data", {}).get("result", [])
+
         except TimeoutExpiredError:
             LOGGER.error(f"Failed to get successful status after executing query '{query}'. Query result: {sample}")
             raise
 
-    def alerts(self):
+        return []
+
+    def alerts(self) -> Dict[str, Any]:
         """
         get all the active alerts
         """
         return self._get_response(query=f"{self.api_v1}/alerts")
 
-    def get_alerts_by_state(self, alert_name, state="firing"):
+    def get_alerts_by_state(self, alert_name: str, state: str = "firing") -> List[Dict[str, Any]]:
         """
         get all the alerts from list of active alerts according the state
         """
         alert_list = self.get_all_alerts_by_alert_name(alert_name=alert_name)
         return [alert for alert in alert_list if alert["state"] == state]
 
-    def wait_for_alert_by_state_sampler(self, alert_name, timeout=TIMEOUT_10MIN, state="firing"):
+    def wait_for_alert_by_state_sampler(
+        self, alert_name: str, timeout: int = TIMEOUT_10MIN, state: str = "firing"
+    ) -> List[Dict[str, Any]]:
         """
         Sample output for an alert if found in the state provided in the args.
 
@@ -238,3 +247,5 @@ class Prometheus(object):
             if sample:
                 LOGGER.info(f"Found alert: {alert_name} in {state} state.")
                 return sample
+
+        return []

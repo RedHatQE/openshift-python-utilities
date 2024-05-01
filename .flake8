@@ -25,3 +25,4 @@ fcn_exclude_functions =
     Version,
     find_all,
     BeautifulSoup,
+    warn,

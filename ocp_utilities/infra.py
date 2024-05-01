@@ -1,19 +1,24 @@
+from __future__ import annotations
 import base64
 import importlib
 import json
 import os
 import shlex
+from typing import Any, Dict, List, Optional
 
 import kubernetes
 import urllib3
+from kubernetes.dynamic import DynamicClient
 from ocp_resources.image_content_source_policy import ImageContentSourcePolicy
 from ocp_resources.node import Node
+from ocp_resources.pod import Pod
 from ocp_resources.resource import ResourceEditor
 from ocp_resources.secret import Secret
 from ocp_wrapper_data_collector.data_collector import (
     get_data_collector_base_dir,
     get_data_collector_dict,
 )
+from pyhelper_utils.shell import run_command
 from simple_logger.logger import get_logger
 from urllib3.exceptions import MaxRetryError
 
@@ -23,7 +28,6 @@ from ocp_utilities.exceptions import (
     NodeUnschedulableError,
     PodsFailedOrPendingError,
 )
-from ocp_utilities.utils import run_command
 
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -32,15 +36,17 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 LOGGER = get_logger(name=__name__)
 
 
-def get_client(config_file=None, config_dict=None, context=None, **kwargs):
+def get_client(**kwargs: Any) -> DynamicClient:
     """
     Get a kubernetes client.
 
     Pass either config_file or config_dict.
     If none of them are passed, client will be created from default OS kubeconfig
     (environment variable or .kube folder).
+    All kwargs, except config_file, config_dict and context will be passed to kubernetes.config.new_client_from_config_dict.
 
-    Args:
+
+    kwargs:
         config_file (str): path to a kubeconfig file.
         config_dict (dict): dict with kubeconfig configuration.
         context (str): name of the context to use.
@@ -49,6 +55,10 @@ def get_client(config_file=None, config_dict=None, context=None, **kwargs):
         DynamicClient: a kubernetes client.
     """
     # Ref: https://github.com/kubernetes-client/python/blob/v26.1.0/kubernetes/base/config/kube_config.py
+    config_file = kwargs.pop("config_file", None)
+    config_dict = kwargs.pop("config_dict", None)
+    context = kwargs.pop("context", None)
+
     if config_dict:
         return kubernetes.dynamic.DynamicClient(
             client=kubernetes.config.new_client_from_config_dict(config_dict=config_dict, context=context, **kwargs)
@@ -75,7 +85,7 @@ def get_client(config_file=None, config_dict=None, context=None, **kwargs):
         )
 
 
-def assert_nodes_ready(nodes):
+def assert_nodes_ready(nodes: List[Node]) -> None:
     """
     Validates all nodes are in ready
 
@@ -91,7 +101,7 @@ def assert_nodes_ready(nodes):
         raise NodeNotReadyError(f"Following nodes are not in ready state: {not_ready_nodes}")
 
 
-def assert_nodes_schedulable(nodes):
+def assert_nodes_schedulable(nodes: List[Node]) -> None:
     """
     Validates all nodes are in schedulable state
 
@@ -107,7 +117,7 @@ def assert_nodes_schedulable(nodes):
         raise NodeUnschedulableError(f"Following nodes are in unscheduled state: {unschedulable_nodes}")
 
 
-def assert_pods_failed_or_pending(pods):
+def assert_pods_failed_or_pending(pods: List[Pod]) -> None:
     """
     Validates all pods are not in failed nor pending phase
 
@@ -134,9 +144,9 @@ def assert_pods_failed_or_pending(pods):
 
 
 def assert_nodes_in_healthy_condition(
-    nodes,
-    healthy_node_condition_type=None,
-):
+    nodes: List[Node],
+    healthy_node_condition_type: Optional[Dict[str, str]],
+) -> None:
     """
     Validates nodes are in a healthy condition.
     Nodes Ready condition is True and the following node conditions are False:
@@ -155,7 +165,7 @@ def assert_nodes_in_healthy_condition(
 
     Raises:
         NodesNotHealthyConditionError: if any nodes DiskPressure MemoryPressure,
-            PIDPressure, NetworkUnavailable, etc condition is True
+            PIDPressure, NetworkUnavailable, etc. condition is True
     """
     LOGGER.info("Verify all nodes are in a healthy condition.")
 
@@ -199,29 +209,29 @@ class DynamicClassCreator:
     Taken from https://stackoverflow.com/a/66815839
     """
 
-    def __init__(self):
-        self.created_classes = {}
+    def __init__(self) -> None:
+        self.created_classes: Dict[Any, Any] = {}
 
-    def __call__(self, base_class):
+    def __call__(self, base_class: Any) -> Any:  # TODO: return `BaseResource` class
         if base_class in self.created_classes:
             return self.created_classes[base_class]
 
         class BaseResource(base_class):
-            def __init__(self, *args, **kwargs):
+            def __init__(self, *args: Any, **kwargs: Any) -> None:
                 super().__init__(*args, **kwargs)
 
-            def _set_dynamic_class_creator_label(self):
+            def _set_dynamic_class_creator_label(self) -> None:
                 self.res.setdefault("metadata", {}).setdefault("labels", {}).update({
                     "created-by-dynamic-class-creator": "Yes"
                 })
 
-            def to_dict(self):
+            def to_dict(self) -> None:
                 if not self.res:
                     super().to_dict()
 
                 self._set_dynamic_class_creator_label()
 
-            def clean_up(self):
+            def clean_up(self) -> None:
                 try:
                     data_collector_dict = get_data_collector_dict()
                     if data_collector_dict:
@@ -248,7 +258,7 @@ class DynamicClassCreator:
         return BaseResource
 
 
-def cluster_resource(base_class):
+def cluster_resource(base_class: Any) -> Any:
     """
     Base class for all resources in order to override clean_up() method to collect resource data.
     data_collect_yaml dict can be set via py_config pytest plugin or via
@@ -282,7 +292,13 @@ def cluster_resource(base_class):
     return creator(base_class=base_class)
 
 
-def create_icsp_command(image, source_url, folder_name, pull_secret=None, filter_options=""):
+def create_icsp_command(
+    image: str,
+    source_url: str,
+    folder_name: str,
+    pull_secret: str = "",
+    filter_options: str = "",
+) -> str:
     """
         Create ImageContentSourcePolicy command.
 
@@ -304,7 +320,13 @@ def create_icsp_command(image, source_url, folder_name, pull_secret=None, filter
     return base_command
 
 
-def generate_icsp_file(folder_name, image, source_url, pull_secret=None, filter_options=""):
+def generate_icsp_file(
+    folder_name: str,
+    image: str,
+    source_url: str,
+    pull_secret: str = "",
+    filter_options: str = "",
+) -> str:
     base_command = create_icsp_command(
         image=image,
         source_url=source_url,
@@ -323,19 +345,19 @@ def generate_icsp_file(folder_name, image, source_url, pull_secret=None, filter_
     return icsp_file_path
 
 
-def create_icsp_from_file(icsp_file_path):
+def create_icsp_from_file(icsp_file_path: str) -> ImageContentSourcePolicy:
     icsp = ImageContentSourcePolicy(yaml_file=icsp_file_path)
     icsp.deploy()
     return icsp
 
 
-def create_icsp(icsp_name, repository_digest_mirrors):
+def create_icsp(icsp_name: str, repository_digest_mirrors: List[Dict[str, Any]]) -> ImageContentSourcePolicy:
     icsp = ImageContentSourcePolicy(name=icsp_name, repository_digest_mirrors=repository_digest_mirrors)
     icsp.deploy()
     return icsp
 
 
-def dict_base64_encode(_dict):
+def dict_base64_encode(_dict: Dict[Any, Any]) -> str:
     """
     Encoding dict in base64
 
@@ -345,10 +367,15 @@ def dict_base64_encode(_dict):
     Returns:
         str: given _dict encoded in base64
     """
-    return base64.b64encode(json.dumps(_dict).encode("ascii")).decode("utf-8")
+    return base64.b64encode(json.dumps(_dict).encode("ascii")).decode()
 
 
-def create_update_secret(secret_data_dict, name, namespace, admin_client=None):
+def create_update_secret(
+    secret_data_dict: Dict[str, Dict[str, Dict[str, str]]],
+    name: str,
+    namespace: str,
+    admin_client: DynamicClient = None,
+) -> Secret:
     """
     Update existing secret or create a new secret; secret type - dockerconfigjson
 

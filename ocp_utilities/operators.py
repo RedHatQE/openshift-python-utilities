@@ -1,5 +1,7 @@
 from pprint import pformat
+from typing import Any, Dict, List, Optional
 
+from kubernetes.dynamic import DynamicClient
 from kubernetes.dynamic.exceptions import ResourceNotFoundError
 from ocp_resources.catalog_source import CatalogSource
 from ocp_resources.cluster_service_version import ClusterServiceVersion
@@ -24,7 +26,9 @@ TIMEOUT_10MIN = 10 * 60
 TIMEOUT_30MIN = 30 * 60
 
 
-def wait_for_install_plan_from_subscription(admin_client, subscription, timeout=TIMEOUT_5MIN):
+def wait_for_install_plan_from_subscription(
+    admin_client: DynamicClient, subscription: Subscription, timeout: int = TIMEOUT_5MIN
+) -> InstallPlan:
     """
     Wait for InstallPlan from Subscription.
 
@@ -62,7 +66,9 @@ def wait_for_install_plan_from_subscription(admin_client, subscription, timeout=
         raise
 
 
-def wait_for_operator_install(admin_client, subscription, timeout=TIMEOUT_5MIN):
+def wait_for_operator_install(
+    admin_client: DynamicClient, subscription: Subscription, timeout: int = TIMEOUT_5MIN
+) -> None:
     """
     Wait for the operator to be installed, including InstallPlan and CSV ready.
 
@@ -79,7 +85,11 @@ def wait_for_operator_install(admin_client, subscription, timeout=TIMEOUT_5MIN):
     )
 
 
-def wait_for_csv_successful_state(admin_client, subscription, timeout=TIMEOUT_10MIN):
+def wait_for_csv_successful_state(
+    admin_client: DynamicClient,
+    subscription: Subscription,
+    timeout: int = TIMEOUT_10MIN,
+) -> None:
     """
     Wait for CSV to be ready.
 
@@ -89,7 +99,7 @@ def wait_for_csv_successful_state(admin_client, subscription, timeout=TIMEOUT_10
         timeout (int): Timeout in seconds to wait for CSV to be ready.
     """
 
-    def _wait_for_subscription_installed_csv(_subscription):
+    def _wait_for_subscription_installed_csv(_subscription: Subscription) -> Any:
         LOGGER.info(f"Wait Subscription {_subscription.name} installedCSV.")
         for sample in TimeoutSampler(
             wait_timeout=30,
@@ -107,7 +117,7 @@ def wait_for_csv_successful_state(admin_client, subscription, timeout=TIMEOUT_10
     csv.wait_for_status(status=csv.Status.SUCCEEDED, timeout=timeout)
 
 
-def get_csv_by_name(admin_client, csv_name, namespace):
+def get_csv_by_name(admin_client: DynamicClient, csv_name: str, namespace: str) -> ClusterServiceVersion:
     """
     Gets CSV from a given namespace by name
 
@@ -123,26 +133,28 @@ def get_csv_by_name(admin_client, csv_name, namespace):
         NotFoundError: when a given CSV is not found in a given namespace
     """
     csv = cluster_resource(ClusterServiceVersion)(client=admin_client, namespace=namespace, name=csv_name)
+
     if csv.exists:
         return csv
+
     raise ResourceNotFoundError(f"CSV {csv_name} not found in namespace: {namespace}")
 
 
 def install_operator(
-    admin_client,
-    name,
-    channel,
-    source=None,
-    target_namespaces=None,
-    timeout=TIMEOUT_30MIN,
-    operator_namespace=None,
-    source_image=None,
-    iib_index_image=None,
-    brew_token=None,
-    must_gather_output_dir=None,
-    kubeconfig=None,
-    cluster_name=None,
-):
+    admin_client: DynamicClient,
+    target_namespaces: Optional[List[str]],
+    name: str,
+    channel: str,
+    source: str = "",
+    timeout: int = TIMEOUT_30MIN,
+    operator_namespace: str = "",
+    source_image: str = "",
+    iib_index_image: str = "",
+    brew_token: str = "",
+    must_gather_output_dir: str = "",
+    kubeconfig: str = "",
+    cluster_name: str = "",
+) -> None:
     """
     Install operator on cluster.
 
@@ -244,11 +256,11 @@ def install_operator(
 
 
 def uninstall_operator(
-    admin_client,
-    name,
-    timeout=TIMEOUT_30MIN,
-    operator_namespace=None,
-):
+    admin_client: DynamicClient,
+    name: str,
+    timeout: int = TIMEOUT_30MIN,
+    operator_namespace: str = "",
+) -> None:
     """
     Uninstall operator on cluster.
 
@@ -295,8 +307,12 @@ def uninstall_operator(
 
 
 def create_catalog_source_for_iib_install(
-    name, iib_index_image, brew_token, operator_market_namespace, admin_client=None
-):
+    name: str,
+    iib_index_image: str,
+    brew_token: str,
+    operator_market_namespace: str,
+    admin_client: DynamicClient = None,
+) -> CatalogSource:
     """
     Create ICSP and catalog source for given iib index image
 
@@ -311,7 +327,9 @@ def create_catalog_source_for_iib_install(
         CatalogSource: catalog source object.
     """
 
-    def _manipulate_validating_webhook_configuration(_validating_webhook_configuration):
+    def _manipulate_validating_webhook_configuration(
+        _validating_webhook_configuration: ValidatingWebhookConfiguration,
+    ) -> Dict[str, Any]:
         _resource_name = "imagecontentsourcepolicies"
         _validating_webhook_configuration_dict = _validating_webhook_configuration.instance.to_dict()
         for webhook in _validating_webhook_configuration_dict["webhooks"]:
@@ -324,7 +342,7 @@ def create_catalog_source_for_iib_install(
 
         return _validating_webhook_configuration_dict
 
-    def _icsp(_repository_digest_mirrors):
+    def _icsp(_repository_digest_mirrors: List[Dict[str, Any]]) -> None:
         if icsp.exists:
             ResourceEditor(
                 patches={icsp: {"spec:": {"repository_digest_mirrors": _repository_digest_mirrors}}}
@@ -340,7 +358,7 @@ def create_catalog_source_for_iib_install(
     _iib_index_image = iib_index_image.replace(source_iib_registry, brew_registry)
     icsp = ImageContentSourcePolicy(name="brew-registry")
     validating_webhook_configuration = ValidatingWebhookConfiguration(name="sre-imagecontentpolicies-validation")
-    repository_digest_mirrors = [
+    repository_digest_mirrors: List[Dict[str, Any]] = [
         {
             "source": source_iib_registry,
             "mirrors": [brew_registry],
@@ -383,8 +401,13 @@ def create_catalog_source_for_iib_install(
 
 
 def create_catalog_source_from_image(
-    name, namespace, image, source_type=None, update_strategy_registry_poll_interval=None, admin_client=None
-):
+    name: str,
+    namespace: str,
+    image: str,
+    source_type: str = "",
+    update_strategy_registry_poll_interval: str = "",
+    admin_client: DynamicClient = None,
+) -> CatalogSource:
     """
     Create CatalogSource for given image
 
@@ -410,5 +433,4 @@ def create_catalog_source_from_image(
         source_type=source_type or "grpc",
         update_strategy_registry_poll_interval=update_strategy_registry_poll_interval or "30m",
     )
-    catalog_source.deploy(wait=True)
-    return catalog_source
+    return catalog_source.deploy(wait=True)

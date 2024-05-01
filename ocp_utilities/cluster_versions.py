@@ -1,8 +1,11 @@
+from __future__ import annotations
 import functools
 import re
+from typing import Dict, List
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, ResultSet
+from kubernetes.dynamic import DynamicClient
 from ocp_resources.cluster_version import ClusterVersion
 from simple_logger.logger import get_logger
 from semver import Version
@@ -13,7 +16,7 @@ LOGGER = get_logger(name="ocp-versions")
 
 
 @functools.cache
-def parse_openshift_release_url():
+def parse_openshift_release_url() -> ResultSet:
     url = "https://openshift-release.apps.ci.l2s4.p1.openshiftapps.com"
     LOGGER.info(f"Parsing {url}")
     req = requests.get(url, headers={"Cache-Control": "no-cache"})
@@ -22,7 +25,7 @@ def parse_openshift_release_url():
 
 
 @functools.cache
-def get_accepted_cluster_versions():
+def get_accepted_cluster_versions() -> Dict[str, Dict[str, List[str]]]:
     """
     Get all accepted cluster versions from https://openshift-release.apps.ci.l2s4.p1.openshiftapps.com
 
@@ -45,7 +48,7 @@ def get_accepted_cluster_versions():
          'rc': {'4.15': ['4.15.0-0.rc-2022-05-25-113430']},
          'fc': {'4.15': ['4.15.0-0.fc-2022-05-25-113430']}}
     """
-    _accepted_version_dict = {}
+    _accepted_version_dict: Dict[str, Dict[str, List[str]]] = {}
     for tr in parse_openshift_release_url():
         version, status = [_tr for _tr in tr.text.splitlines() if _tr][:2]
         if status == "Accepted":
@@ -67,7 +70,7 @@ def get_accepted_cluster_versions():
     return _accepted_version_dict
 
 
-def get_cluster_version(client=None):
+def get_cluster_version(client: DynamicClient = None) -> Version:
     """
     Get cluster version
 
@@ -82,12 +85,11 @@ def get_cluster_version(client=None):
         condition_type=cluster_version.Condition.AVAILABLE,
         condition_status=cluster_version.Condition.Status.TRUE,
     ):
-        try:
-            ocp_version = re.search(r"([\d.]+)", cluster_version_message).group()
+        if ocp_version_match := re.search(r"([\d.]+)", cluster_version_message):
+            ocp_version = ocp_version_match.group()
             LOGGER.info(f"Cluster version: {ocp_version}")
             return Version.parse(ocp_version)
 
-        except (AttributeError, IndexError) as ex:
-            raise ClusterVersionNotFoundError(f"Cluster version not found: {cluster_version_message}, exception: {ex}")
+        raise ClusterVersionNotFoundError(f"Cluster version not found: {cluster_version_message}")
 
     raise ClusterVersionNotFoundError("`ClusterVersion` message not found")
