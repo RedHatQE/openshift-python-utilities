@@ -18,7 +18,7 @@ class NodesNotHealthyConditionError(Exception):
 
 
 class CommandExecFailed(Exception):
-    def __init__(self, name: str, err: str = ""):
+    def __init__(self, name: str, err: str = "") -> None:
         self.name = name
         self.err = f"Error: {err}" if err else ""
 
