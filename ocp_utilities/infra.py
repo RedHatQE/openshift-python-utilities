@@ -36,7 +36,11 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 LOGGER = get_logger(name=__name__)
 
 
-@deprecated(deprecated_in="5.0.49", removed_in="6.0", details="Use the bar function instead")
+@deprecated(
+    deprecated_in="5.0.49",
+    removed_in="6.0",
+    details="Use `get_client` function from `openshift-python-wrapper` instead",
+)
 def get_client(**kwargs: Any) -> DynamicClient:
     return get_dynamic_client(**kwargs)
 
