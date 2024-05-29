@@ -6,13 +6,14 @@ import os
 import shlex
 from typing import Any, Dict, List, Optional
 
-import kubernetes
 import urllib3
+from deprecation import deprecated
 from kubernetes.dynamic import DynamicClient
 from ocp_resources.image_content_source_policy import ImageContentSourcePolicy
 from ocp_resources.node import Node
 from ocp_resources.pod import Pod
 from ocp_resources.resource import ResourceEditor
+from ocp_resources.resource import get_client as get_dynamic_client
 from ocp_resources.secret import Secret
 from ocp_wrapper_data_collector.data_collector import (
     get_data_collector_base_dir,
@@ -20,7 +21,6 @@ from ocp_wrapper_data_collector.data_collector import (
 )
 from pyhelper_utils.shell import run_command
 from simple_logger.logger import get_logger
-from urllib3.exceptions import MaxRetryError
 
 from ocp_utilities.exceptions import (
     NodeNotReadyError,
@@ -36,53 +36,9 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 LOGGER = get_logger(name=__name__)
 
 
+@deprecated(deprecated_in="5.0.49", removed_in="6.0", details="Use the bar function instead")
 def get_client(**kwargs: Any) -> DynamicClient:
-    """
-    Get a kubernetes client.
-
-    Pass either config_file or config_dict.
-    If none of them are passed, client will be created from default OS kubeconfig
-    (environment variable or .kube folder).
-    All kwargs, except config_file, config_dict and context will be passed to kubernetes.config.new_client_from_config_dict.
-
-
-    kwargs:
-        config_file (str): path to a kubeconfig file.
-        config_dict (dict): dict with kubeconfig configuration.
-        context (str): name of the context to use.
-
-    Returns:
-        DynamicClient: a kubernetes client.
-    """
-    # Ref: https://github.com/kubernetes-client/python/blob/v26.1.0/kubernetes/base/config/kube_config.py
-    config_file = kwargs.pop("config_file", None)
-    config_dict = kwargs.pop("config_dict", None)
-    context = kwargs.pop("context", None)
-
-    if config_dict:
-        return kubernetes.dynamic.DynamicClient(
-            client=kubernetes.config.new_client_from_config_dict(config_dict=config_dict, context=context, **kwargs)
-        )
-    try:
-        # Ref: https://github.com/kubernetes-client/python/blob/v26.1.0/kubernetes/base/config/__init__.py
-        LOGGER.info("Trying to get client via new_client_from_config")
-
-        # kubernetes.config.kube_config.load_kube_config sets KUBE_CONFIG_DEFAULT_LOCATION during module import.
-        # If `KUBECONFIG` environment variable is set via code, the `KUBE_CONFIG_DEFAULT_LOCATION` will be None since
-        # is populated during import which comes before setting the variable in code.
-        config_file = config_file or os.environ.get("KUBECONFIG", "~/.kube/config")
-        return kubernetes.dynamic.DynamicClient(
-            client=kubernetes.config.new_client_from_config(config_file=config_file, context=context, **kwargs)
-        )
-    except MaxRetryError:
-        # Ref: https://github.com/kubernetes-client/python/blob/v26.1.0/kubernetes/base/config/incluster_config.py
-        LOGGER.info("Trying to get client via incluster_config")
-        return kubernetes.dynamic.DynamicClient(
-            client=kubernetes.config.incluster_config.load_incluster_config(
-                client_configuration=kwargs.get("client_configuration"),
-                try_refresh_token=kwargs.get("try_refresh_token", True),
-            )
-        )
+    return get_dynamic_client(**kwargs)
 
 
 def assert_nodes_ready(nodes: List[Node]) -> None:
