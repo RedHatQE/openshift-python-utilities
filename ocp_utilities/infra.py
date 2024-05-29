@@ -39,7 +39,7 @@ LOGGER = get_logger(name=__name__)
 @deprecated(
     deprecated_in="5.0.49",
     removed_in="6.0",
-    details="Use `get_client` function from `openshift-python-wrapper` instead",
+    details="Please use `from ocp_resources.resource import get_client` instead",
 )
 def get_client(**kwargs: Any) -> DynamicClient:
     return get_dynamic_client(**kwargs)
