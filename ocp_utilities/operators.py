@@ -358,17 +358,18 @@ def create_catalog_source_for_iib_install(
 
     brew_registry = "brew.registry.redhat.io"
     source_iib_registry = iib_index_image.split("/")[0]
+    brew_image_repo = iib_index_image.split("/")[1]
     _iib_index_image = iib_index_image.replace(source_iib_registry, brew_registry)
     icsp = ImageContentSourcePolicy(name="brew-registry")
     validating_webhook_configuration = ValidatingWebhookConfiguration(name="sre-imagecontentpolicies-validation")
     repository_digest_mirrors: List[Dict[str, Any]] = [
         {
-            "source": source_iib_registry,
-            "mirrors": [brew_registry],
+            "source": f"{source_iib_registry}/{brew_image_repo}",
+            "mirrors": [f"{brew_registry}/{brew_image_repo}"],
         },
         {
-            "source": "registry.redhat.io",
-            "mirrors": [brew_registry],
+            "source": f"registry.redhat.io/{brew_image_repo}",
+            "mirrors": [f"{brew_registry}/{brew_image_repo}"],
         },
     ]
 
