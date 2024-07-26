@@ -7,8 +7,6 @@ from typing import Any, Dict, List
 import requests
 from kubernetes.dynamic import DynamicClient
 from ocp_resources.route import Route
-from ocp_resources.secret import Secret
-from ocp_resources.service_account import ServiceAccount
 from timeout_sampler import TimeoutExpiredError, TimeoutSampler
 from simple_logger.logger import get_logger
 
@@ -48,7 +46,8 @@ class Prometheus(object):
             resource_name (str): Prometheus API resource name
             client (DynamicClient): Admin client resource
             verify_ssl (bool): Perform SSL verification on query
-            bearer_token (str): Used for query OAuth with API endpoint
+            bearer_token (str): Used for query OAuth with API endpoint, this needs to be created via oc create token command
+                example: oc create token <resource_name> -n <namespace> --duration=<number>s
         """
         self.namespace = namespace
         self.resource_name = resource_name
@@ -70,26 +69,7 @@ class Prometheus(object):
     def _get_headers(self) -> Dict[str, str]:
         """Uses the Prometheus serviceaccount to get an access token for OAuth if not given"""
         LOGGER.info("Setting Prometheus headers and Obtaining OAuth token")
-
-        if not self.bearer_token:
-            secret = self._get_resource_secret()
-            self.bearer_token = secret.instance.metadata.annotations["openshift.io/token-secret.value"]
-
         return {"Authorization": f"Bearer {self.bearer_token}"}
-
-    def _get_service_account(self) -> ServiceAccount:
-        """get service account  for the given namespace and resource"""
-
-        return ServiceAccount(namespace=self.namespace, name=self.resource_name, client=self.client)
-
-    def _get_resource_secret(self) -> Secret:
-        """secret for the service account extracted"""
-        resource_sa = self._get_service_account()
-        return Secret(
-            namespace=self.namespace,
-            name=resource_sa.instance.imagePullSecrets[0].name,
-            client=self.client,
-        )
 
     def _get_response(self, query: str) -> Dict[str, Any]:
         response = requests.get(f"{self.api_url}{query}", headers=self.headers, verify=self.verify_ssl)
