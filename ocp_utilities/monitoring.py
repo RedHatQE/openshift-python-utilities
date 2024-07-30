@@ -46,8 +46,10 @@ class Prometheus(object):
             resource_name (str): Prometheus API resource name
             client (DynamicClient): Admin client resource
             verify_ssl (bool): Perform SSL verification on query
-            bearer_token (str): Used for query OAuth with API endpoint, this needs to be created via oc create token command
-                example: oc create token <resource_name> -n <namespace> --duration=<number>s
+            bearer_token (str, Required): Used for query OAuth with API endpoint, this needs to be created via oc
+            create token command
+                example: oc create token prometheus-k8s -n openshift-monitoring --duration=600s
+                This would create a token for prometheus calls, that would expire in 600 seconds
         """
         self.namespace = namespace
         self.resource_name = resource_name
@@ -67,8 +69,7 @@ class Prometheus(object):
         return f"https://{route}"
 
     def _get_headers(self) -> Dict[str, str]:
-        """Uses the Prometheus serviceaccount to get an access token for OAuth if not given"""
-        LOGGER.info("Setting Prometheus headers and Obtaining OAuth token")
+        LOGGER.info("Setting authorization headers for prometheus call")
         return {"Authorization": f"Bearer {self.bearer_token}"}
 
     def _get_response(self, query: str) -> Dict[str, Any]:
