@@ -34,21 +34,21 @@ class Prometheus(object):
 
     def __init__(
         self,
+        bearer_token: str,
         namespace: str = "openshift-monitoring",
         resource_name: str = "prometheus-k8s",
         client: DynamicClient = None,
         verify_ssl: bool = True,
-        bearer_token: str = "",
     ) -> None:
         """
         Args:
+            bearer_token (str, Required): Used for query OAuth with API endpoint, this needs to be created via oc
+            create token command
             namespace (str): Prometheus API resource namespace
             resource_name (str): Prometheus API resource name
             client (DynamicClient): Admin client resource
             verify_ssl (bool): Perform SSL verification on query
-            bearer_token (str, Required): Used for query OAuth with API endpoint, this needs to be created via oc
-            create token command
-                example: oc create token prometheus-k8s -n openshift-monitoring --duration=600s
+        Example to create prometheus token: oc create token prometheus-k8s -n openshift-monitoring --duration=600s
                 This would create a token for prometheus calls, that would expire in 600 seconds
         """
         self.namespace = namespace
@@ -57,20 +57,19 @@ class Prometheus(object):
         self.api_v1 = "/api/v1"
         self.verify_ssl = verify_ssl
         self.bearer_token = bearer_token
+
+        if not self.bearer_token:
+            raise ValueError("Prometheus token is required.")
+
         self.api_url = self._get_route()
-        self.headers = self._get_headers()
+        self.headers = {"Authorization": f"Bearer {self.bearer_token}"}
         self.scrape_interval = self.get_scrape_interval()
 
     def _get_route(self) -> str:
         # get route to prometheus HTTP api
         LOGGER.info("Prometheus: Obtaining route")
         route = Route(namespace=self.namespace, name=self.resource_name, client=self.client).instance.spec.host
-
         return f"https://{route}"
-
-    def _get_headers(self) -> Dict[str, str]:
-        LOGGER.info("Setting authorization headers for prometheus call")
-        return {"Authorization": f"Bearer {self.bearer_token}"}
 
     def _get_response(self, query: str) -> Dict[str, Any]:
         response = requests.get(f"{self.api_url}{query}", headers=self.headers, verify=self.verify_ssl)
