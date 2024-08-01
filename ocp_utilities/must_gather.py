@@ -36,7 +36,9 @@ def run_must_gather(
             Note: flag is optional parameter for must-gather. When it is not passed "--default" flag is used by
             must-gather. However, flag_names can not be passed without script_name
         since (str, optional): since when the data should be collected. format is: '(+|-)[0-9]+(s|m|h|d)'
-        timeout (str, optional): runs the debug pods for specified duration
+            Example: 100s or 10m
+        timeout (str, optional): runs the debug pods for specified duration, timeout string needs to include the unit of time
+            Example: 600s
     Returns:
         str: command output
     """
