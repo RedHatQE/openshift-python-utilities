@@ -44,12 +44,12 @@ class Prometheus(object):
         Args:
             bearer_token (str, Required): Used for query OAuth with API endpoint, this needs to be created via oc
             create token command
+             Example to create prometheus token: oc create token prometheus-k8s -n openshift-monitoring --duration=600s
+                This would create a token for prometheus calls, that would expire in 600 seconds
             namespace (str): Prometheus API resource namespace
             resource_name (str): Prometheus API resource name
             client (DynamicClient): Admin client resource
             verify_ssl (bool): Perform SSL verification on query
-        Example to create prometheus token: oc create token prometheus-k8s -n openshift-monitoring --duration=600s
-                This would create a token for prometheus calls, that would expire in 600 seconds
         """
         self.namespace = namespace
         self.resource_name = resource_name
@@ -57,9 +57,6 @@ class Prometheus(object):
         self.api_v1 = "/api/v1"
         self.verify_ssl = verify_ssl
         self.bearer_token = bearer_token
-
-        if not self.bearer_token:
-            raise ValueError("Prometheus token is required.")
 
         self.api_url = self._get_route()
         self.headers = {"Authorization": f"Bearer {self.bearer_token}"}
