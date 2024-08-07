@@ -17,6 +17,8 @@ def run_must_gather(
     skip_tls_check: bool = False,
     script_name: str = "",
     flag_names: str = "",
+    since: str = "",
+    timeout: str = "",
 ) -> str:
     """
     Run must gather command with an option to create target directory.
@@ -33,7 +35,10 @@ def run_must_gather(
 
             Note: flag is optional parameter for must-gather. When it is not passed "--default" flag is used by
             must-gather. However, flag_names can not be passed without script_name
-
+        since (str, optional): since when the data should be collected. format is: '(+|-)[0-9]+(s|m|h|d)'
+            Example: 100s or 10m
+        timeout (str, optional): runs the debug pods for specified duration, timeout string needs to include the unit of time
+            Example: 600s
     Returns:
         str: command output
     """
@@ -48,6 +53,10 @@ def run_must_gather(
         base_command += f" --kubeconfig {kubeconfig}"
     if script_name:
         base_command += f" -- {script_name}"
+    if since:
+        base_command += f" --since={since}"
+    if timeout:
+        base_command += f" --timeout={timeout}"
     # flag_name must be the last argument
     if flag_names:
         flag_string = "".join([f" --{flag_name}" for flag_name in flag_names])
