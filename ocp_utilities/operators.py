@@ -373,7 +373,7 @@ def create_catalog_source_for_iib_install(
         },
         {
             "source": "registry.stage.redhat.io",
-            "mirrors": [f"{brew_registry}"],
+            "mirrors": [brew_registry],
         },
     ]
 
