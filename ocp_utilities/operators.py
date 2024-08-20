@@ -80,7 +80,7 @@ def wait_for_operator_install(
     install_plan = wait_for_install_plan_from_subscription(admin_client=admin_client, subscription=subscription)
     # If the install plan approval strategy is set to Manual because we are installing an older version,
     # approve the InstallPlan of the target version.
-    if subscription.install_plan_approval == 'Manual':
+    if subscription.install_plan_approval == "Manual":
         ResourceEditor(patches={install_plan: {"spec": {"approved": True}}}).update()
 
     install_plan.wait_for_status(status=install_plan.Status.COMPLETE, timeout=timeout)
