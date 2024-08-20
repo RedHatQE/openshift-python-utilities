@@ -78,6 +78,11 @@ def wait_for_operator_install(
         timeout (int): Timeout in seconds to wait for operator to be installed.
     """
     install_plan = wait_for_install_plan_from_subscription(admin_client=admin_client, subscription=subscription)
+    # If the install plan approval strategy is set to Manual because we are installing an older version,
+    # approve the InstallPlan of the target version.
+    if subscription.install_plan_approval == "Manual":
+        ResourceEditor(patches={install_plan: {"spec": {"approved": True}}}).update()
+
     install_plan.wait_for_status(status=install_plan.Status.COMPLETE, timeout=timeout)
     wait_for_csv_successful_state(
         admin_client=admin_client,
@@ -146,6 +151,8 @@ def install_operator(
     name: str,
     channel: str,
     source: str = "",
+    install_plan_approval: str = "Automatic",
+    starting_csv: str = "",
     timeout: int = TIMEOUT_30MIN,
     operator_namespace: str = "",
     source_image: str = "",
@@ -163,6 +170,8 @@ def install_operator(
         name (str): Name of the operator to install.
         channel (str): Channel to install operator from.
         source (str, optional): CatalogSource name. Source must be provided if iib_index_image or source_image not provided.
+        install_plan_approval (str, optional): Approval mode for InstallPlans. Defaults to "Automatic".
+        starting_csv (str, optional): The specific CSV to start from.
         target_namespaces (list, optional): Target namespaces for the operator install process.
             If not provided, a namespace with te operator name will be created and used.
         timeout (int): Timeout in seconds to wait for operator to be ready.
@@ -238,7 +247,8 @@ def install_operator(
             channel=channel,
             source=catalog_source.name if catalog_source else source,
             source_namespace=operator_market_namespace,
-            install_plan_approval="Automatic",
+            install_plan_approval=install_plan_approval,
+            starting_csv=starting_csv,
         )
         subscription.deploy(wait=True)
         wait_for_operator_install(
