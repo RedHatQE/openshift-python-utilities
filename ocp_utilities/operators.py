@@ -1,4 +1,3 @@
-from itertools import chain
 from pprint import pformat
 from typing import Any, Dict, List, Optional
 
@@ -6,16 +5,12 @@ from kubernetes.dynamic import DynamicClient
 from kubernetes.dynamic.exceptions import ResourceNotFoundError
 from ocp_resources.catalog_source import CatalogSource
 from ocp_resources.cluster_service_version import ClusterServiceVersion
-from ocp_resources.configmap import ConfigMap
-from ocp_resources.deployment import Deployment
 from ocp_resources.image_content_source_policy import ImageContentSourcePolicy
 from ocp_resources.installplan import InstallPlan
 from ocp_resources.namespace import Namespace
 from ocp_resources.operator import Operator
 from ocp_resources.operator_group import OperatorGroup
-from ocp_resources.resource import ResourceEditor, NamespacedResource, Resource
-from ocp_resources.secret import Secret
-from ocp_resources.service import Service
+from ocp_resources.resource import ResourceEditor
 from ocp_resources.subscription import Subscription
 from timeout_sampler import TimeoutExpiredError, TimeoutSampler
 from ocp_resources.validating_webhook_config import ValidatingWebhookConfiguration
