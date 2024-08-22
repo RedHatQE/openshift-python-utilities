@@ -1,3 +1,4 @@
+from itertools import chain
 from pprint import pformat
 from typing import Any, Dict, List, Optional
 
@@ -5,12 +6,16 @@ from kubernetes.dynamic import DynamicClient
 from kubernetes.dynamic.exceptions import ResourceNotFoundError
 from ocp_resources.catalog_source import CatalogSource
 from ocp_resources.cluster_service_version import ClusterServiceVersion
+from ocp_resources.configmap import ConfigMap
+from ocp_resources.deployment import Deployment
 from ocp_resources.image_content_source_policy import ImageContentSourcePolicy
 from ocp_resources.installplan import InstallPlan
 from ocp_resources.namespace import Namespace
 from ocp_resources.operator import Operator
 from ocp_resources.operator_group import OperatorGroup
-from ocp_resources.resource import ResourceEditor
+from ocp_resources.resource import ResourceEditor, NamespacedResource, Resource
+from ocp_resources.secret import Secret
+from ocp_resources.service import Service
 from ocp_resources.subscription import Subscription
 from timeout_sampler import TimeoutExpiredError, TimeoutSampler
 from ocp_resources.validating_webhook_config import ValidatingWebhookConfiguration
@@ -273,6 +278,7 @@ def uninstall_operator(
     name: str,
     timeout: int = TIMEOUT_30MIN,
     operator_namespace: str = "",
+    clean_up_namespace: bool = True,
 ) -> None:
     """
     Uninstall operator on cluster.
@@ -282,8 +288,8 @@ def uninstall_operator(
         name (str): Name of the operator to uninstall.
         timeout (int): Timeout in seconds to wait for operator to be uninstalled.
         operator_namespace (str, optional): Operator namespace, if not provided, operator name will be used
+        clean_up_namespace (bool, optional): Used to decide if operator_namespace should be cleaned up. Defaults to True.
     """
-
     csv_name = None
     operator_namespace = operator_namespace or name
     subscription = Subscription(
@@ -301,13 +307,14 @@ def uninstall_operator(
         namespace=operator_namespace,
     ).clean_up()
 
-    for _operator in Operator.get(dyn_client=admin_client):
-        if _operator.name.startswith(name):
-            # operator name convention is <name>.<namespace>
-            namespace = operator_namespace or name.split(".")[-1]
-            ns = Namespace(client=admin_client, name=namespace)
-            if ns.exists:
-                ns.clean_up()
+    if clean_up_namespace:
+        for _operator in Operator.get(dyn_client=admin_client):
+            if _operator.name.startswith(name):
+                # operator name convention is <name>.<namespace>
+                namespace = operator_namespace or name.split(".")[-1]
+                ns = Namespace(client=admin_client, name=namespace)
+                if ns.exists:
+                    ns.clean_up()
 
     if csv_name:
         csv = ClusterServiceVersion(
@@ -316,7 +323,7 @@ def uninstall_operator(
             name=csv_name,
         )
 
-        csv.wait_deleted(timeout=timeout)
+        csv.wait_deleted(timeout=timeout) if clean_up_namespace else csv.clean_up(wait=True)
 
 
 def create_catalog_source_for_iib_install(
