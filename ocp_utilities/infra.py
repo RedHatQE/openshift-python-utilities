@@ -381,7 +381,6 @@ def get_pods_by_name_prefix(client: DynamicClient, pod_prefix: str, namespace: s
         client (DynamicClient): OCP Client to use.
         pod_prefix (str): str or regex pattern.
         namespace (str): Namespace name.
-        get_all (bool): Return all pods if True else only the first one.
 
     Returns:
         list[Pod]: A list of all matching pods
