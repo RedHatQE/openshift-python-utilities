@@ -375,26 +375,21 @@ def create_update_secret(
     return secret.deploy()
 
 
-def get_pod_by_name_prefix(
-    dyn_client: DynamicClient, pod_prefix: str, namespace: str, get_all: bool = False
-) -> Pod | List[Pod]:
+def get_pods_by_name_prefix(client: DynamicClient, pod_prefix: str, namespace: str) -> List[Pod]:
     """
     Args:
-        dyn_client (DynamicClient): OCP Client to use.
+        client (DynamicClient): OCP Client to use.
         pod_prefix (str): str or regex pattern.
         namespace (str): Namespace name.
         get_all (bool): Return all pods if True else only the first one.
 
     Returns:
-        list or Pod: A list of all matching pods if get_all else only the first pod.
+        list[Pod]: A list of all matching pods
 
     Raises:
         ResourceNotFoundError: if no pods are found.
     """
-    if pods := [pod for pod in Pod.get(dyn_client=dyn_client, namespace=namespace) if re.match(pod_prefix, pod.name)]:
-        if get_all:
-            return pods
-
-        return pods[0]
+    if pods := [pod for pod in Pod.get(dyn_client=client, namespace=namespace) if re.match(pod_prefix, pod.name)]:
+        return pods
 
     raise ResourceNotFoundError(f"A pod with the {pod_prefix} prefix does not exist")
