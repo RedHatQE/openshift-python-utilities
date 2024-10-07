@@ -1,24 +1,24 @@
 from __future__ import annotations
+
 import base64
 import importlib
 import json
 import os
+import re
 import shlex
 from typing import Any, Dict, List, Optional
 
 import urllib3
 from deprecation import deprecated
 from kubernetes.dynamic import DynamicClient
+from kubernetes.dynamic.exceptions import ResourceNotFoundError
 from ocp_resources.image_content_source_policy import ImageContentSourcePolicy
 from ocp_resources.node import Node
 from ocp_resources.pod import Pod
 from ocp_resources.resource import ResourceEditor
 from ocp_resources.resource import get_client as get_dynamic_client
 from ocp_resources.secret import Secret
-from ocp_wrapper_data_collector.data_collector import (
-    get_data_collector_base_dir,
-    get_data_collector_dict,
-)
+from ocp_wrapper_data_collector.data_collector import get_data_collector_base_dir, get_data_collector_dict
 from pyhelper_utils.shell import run_command
 from simple_logger.logger import get_logger
 
@@ -28,7 +28,6 @@ from ocp_utilities.exceptions import (
     NodeUnschedulableError,
     PodsFailedOrPendingError,
 )
-
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -374,3 +373,22 @@ def create_update_secret(
     secret.data_dict = {secret_key: dict_base64_encode(_dict=secret_data_dict)}
 
     return secret.deploy()
+
+
+def get_pods_by_name_prefix(client: DynamicClient, pod_prefix: str, namespace: str) -> List[Pod]:
+    """
+    Args:
+        client (DynamicClient): OCP Client to use.
+        pod_prefix (str): str or regex pattern.
+        namespace (str): Namespace name.
+
+    Returns:
+        list[Pod]: A list of all matching pods
+
+    Raises:
+        ResourceNotFoundError: if no pods are found.
+    """
+    if pods := [pod for pod in Pod.get(dyn_client=client, namespace=namespace) if re.match(pod_prefix, pod.name)]:
+        return pods
+
+    raise ResourceNotFoundError(f"A pod with the {pod_prefix} prefix does not exist")
