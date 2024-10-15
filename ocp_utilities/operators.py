@@ -78,7 +78,8 @@ def wait_for_operator_install(
     Args:
         admin_client (DynamicClient): Cluster client.
         subscription (Subscription): Subscription instance.
-        status_complete_timeout (int): Timeout in seconds to wait for operator to be installed.
+        creation_timeout (int): Timeout in seconds to wait for InstallPlan to be created.
+        status_complete_timeout (int): Timeout in seconds to wait for InstallPlan status to be COMPLETE.
     """
     install_plan = wait_for_install_plan_from_subscription(
         admin_client=admin_client, subscription=subscription, timeout=creation_timeout
@@ -181,7 +182,7 @@ def install_operator(
         target_namespaces (list, optional): Target namespaces for the operator install process.
             If not provided, a namespace with te operator name will be created and used.
         ip_creation_timeout (int): Timeout in seconds to wait for InstallPlan to be created.
-        timeout (int): Timeout in seconds to wait for InstallPlan status to be comlete.
+        timeout (int): Timeout in seconds to wait for InstallPlan status to be COMPLETE.
         operator_namespace (str, optional): Operator namespace, if not provided, operator name will be used.
         source_image (str, optional): Source image url, If provided install operator from this CatalogSource Image.
         iib_index_image (str, optional): iib index image url, If provided install operator from iib index image.
