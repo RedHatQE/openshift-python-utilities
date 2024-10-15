@@ -1,3 +1,4 @@
+import warnings
 from pprint import pformat
 from typing import Any, Dict, List, Optional
 
@@ -69,18 +70,32 @@ def wait_for_install_plan_from_subscription(
 def wait_for_operator_install(
     admin_client: DynamicClient,
     subscription: Subscription,
-    creation_timeout: int = TIMEOUT_5MIN,
-    status_complete_timeout: int = TIMEOUT_5MIN,
-) -> None:
+    timeout: Optional[int] = None,
+    creation_timeout: Optional[int] = None,
+    status_complete_timeout: Optional[int] = None,
+):
     """
     Wait for the operator to be installed, including InstallPlan and CSV ready.
 
     Args:
         admin_client (DynamicClient): Cluster client.
         subscription (Subscription): Subscription instance.
-        creation_timeout (int): Timeout in seconds to wait for InstallPlan to be created.
-        status_complete_timeout (int): Timeout in seconds to wait for InstallPlan status to be COMPLETE.
+        timeout (int, optional): [Deprecated] Timeout in seconds used if specific timeouts are not provided.
+        creation_timeout (int, optional): Timeout in seconds to wait for InstallPlan to be created.
+        status_complete_timeout (int, optional): Timeout in seconds to wait for operator to be installed.
     """
+    if timeout is not None:
+        warnings.warn(
+            "The 'timeout' parameter is deprecated and will be removed in a future release. "
+            "Please use 'creation_timeout' and 'status_complete_timeout' instead.",
+            DeprecationWarning
+        )
+    else:
+        timeout = TIMEOUT_5MIN
+
+    creation_timeout = creation_timeout or timeout
+    status_complete_timeout = status_complete_timeout or timeout
+
     install_plan = wait_for_install_plan_from_subscription(
         admin_client=admin_client, subscription=subscription, timeout=creation_timeout
     )
