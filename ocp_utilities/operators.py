@@ -67,7 +67,10 @@ def wait_for_install_plan_from_subscription(
 
 
 def wait_for_operator_install(
-    admin_client: DynamicClient, subscription: Subscription, creation_timeout: int = TIMEOUT_5MIN, status_complete_timeout: int = TIMEOUT_5MIN
+    admin_client: DynamicClient,
+    subscription: Subscription,
+    creation_timeout: int = TIMEOUT_5MIN,
+    status_complete_timeout: int = TIMEOUT_5MIN,
 ) -> None:
     """
     Wait for the operator to be installed, including InstallPlan and CSV ready.
@@ -77,7 +80,9 @@ def wait_for_operator_install(
         subscription (Subscription): Subscription instance.
         status_complete_timeout (int): Timeout in seconds to wait for operator to be installed.
     """
-    install_plan = wait_for_install_plan_from_subscription(admin_client=admin_client, subscription=subscription, timeout=creation_timeout)
+    install_plan = wait_for_install_plan_from_subscription(
+        admin_client=admin_client, subscription=subscription, timeout=creation_timeout
+    )
     # If the install plan approval strategy is set to Manual because we are installing an older version,
     # approve the InstallPlan of the target version.
     if subscription.install_plan_approval == "Manual":
