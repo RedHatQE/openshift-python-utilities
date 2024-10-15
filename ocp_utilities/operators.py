@@ -88,7 +88,7 @@ def wait_for_operator_install(
         warnings.warn(
             "The 'timeout' parameter is deprecated and will be removed in a future release. "
             "Please use 'creation_timeout' and 'status_complete_timeout' instead.",
-            DeprecationWarning
+            DeprecationWarning,
         )
     else:
         timeout = TIMEOUT_5MIN
