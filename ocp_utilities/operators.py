@@ -82,7 +82,7 @@ def wait_for_operator_install(
         subscription (Subscription): Subscription instance.
         timeout (int, optional): [Deprecated] Timeout in seconds used if specific timeouts are not provided.
         creation_timeout (int, optional): Timeout in seconds to wait for InstallPlan to be created.
-        status_complete_timeout (int, optional): Timeout in seconds to wait for operator to be installed.
+        status_complete_timeout (int, optional): Timeout in seconds to wait for operator to be installed
     """
     if timeout is not None:
         warnings.warn(
