@@ -174,7 +174,7 @@ def install_operator(
     source: str = "",
     install_plan_approval: str = "Automatic",
     starting_csv: str = "",
-    ip_creation_timeout: int = TIMEOUT_10MIN,
+    install_plan_creation_timeout: int = TIMEOUT_10MIN,
     timeout: int = TIMEOUT_30MIN,
     operator_namespace: str = "",
     source_image: str = "",
