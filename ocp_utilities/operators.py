@@ -71,7 +71,7 @@ def wait_for_operator_install(
     admin_client: DynamicClient,
     subscription: Subscription,
     timeout: Optional[int] = None,
-    creation_timeout: Optional[int] = None,
+    insall_plan_creation_timeout: Optional[int] = None,
     status_complete_timeout: Optional[int] = None,
 ):
     """
