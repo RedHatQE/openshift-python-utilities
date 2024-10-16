@@ -72,7 +72,7 @@ def wait_for_operator_install(
     subscription: Subscription,
     timeout: Optional[int] = None,
     insall_plan_creation_timeout: Optional[int] = None,
-    status_complete_timeout: Optional[int] = None,
+    install_plan_status_complete_timeout: Optional[int] = None,
 ):
     """
     Wait for the operator to be installed, including InstallPlan and CSV ready.
