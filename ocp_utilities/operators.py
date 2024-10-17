@@ -71,7 +71,7 @@ def wait_for_operator_install(
     admin_client: DynamicClient,
     subscription: Subscription,
     timeout: Optional[int] = None,
-    insall_plan_creation_timeout: Optional[int] = None,
+    install_plan_creation_timeout: Optional[int] = None,
     install_plan_status_complete_timeout: Optional[int] = None,
 ):
     """
@@ -93,8 +93,8 @@ def wait_for_operator_install(
     else:
         timeout = TIMEOUT_5MIN
 
-    creation_timeout = creation_timeout or timeout
-    status_complete_timeout = status_complete_timeout or timeout
+    creation_timeout = install_plan_creation_timeout or timeout
+    status_complete_timeout = install_plan_status_complete_timeout or timeout
 
     install_plan = wait_for_install_plan_from_subscription(
         admin_client=admin_client, subscription=subscription, timeout=creation_timeout
@@ -277,8 +277,8 @@ def install_operator(
         wait_for_operator_install(
             admin_client=admin_client,
             subscription=subscription,
-            creation_timeout=ip_creation_timeout,
-            status_complete_timeout=timeout,
+            install_plan_creation_timeout=install_plan_creation_timeout,
+            install_plan_status_complete_timeout=timeout,
         )
     except Exception as ex:
         LOGGER.error(f"{name} Install Failed. \n{ex}")
