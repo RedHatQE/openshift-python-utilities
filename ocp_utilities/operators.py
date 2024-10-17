@@ -73,7 +73,7 @@ def wait_for_operator_install(
     timeout: Optional[int] = None,
     install_plan_creation_timeout: Optional[int] = None,
     install_plan_status_complete_timeout: Optional[int] = None,
-):
+) -> None:
     """
     Wait for the operator to be installed, including InstallPlan and CSV ready.
 
@@ -174,8 +174,8 @@ def install_operator(
     source: str = "",
     install_plan_approval: str = "Automatic",
     starting_csv: str = "",
-    install_plan_creation_timeout: int = None,
-    install_plan_status_complete_timeout: int = None,
+    install_plan_creation_timeout: (int, None) = None,
+    install_plan_status_complete_timeout: (int, None) = None,
     timeout: int = TIMEOUT_30MIN,
     operator_namespace: str = "",
     source_image: str = "",
