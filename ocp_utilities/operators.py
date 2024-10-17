@@ -1,3 +1,4 @@
+import warnings
 from pprint import pformat
 from typing import Any, Dict, List, Optional
 
@@ -67,7 +68,11 @@ def wait_for_install_plan_from_subscription(
 
 
 def wait_for_operator_install(
-    admin_client: DynamicClient, subscription: Subscription, timeout: int = TIMEOUT_5MIN
+    admin_client: DynamicClient,
+    subscription: Subscription,
+    timeout: Optional[int] = None,
+    install_plan_creation_timeout: Optional[int] = None,
+    install_plan_status_complete_timeout: Optional[int] = None,
 ) -> None:
     """
     Wait for the operator to be installed, including InstallPlan and CSV ready.
@@ -75,15 +80,31 @@ def wait_for_operator_install(
     Args:
         admin_client (DynamicClient): Cluster client.
         subscription (Subscription): Subscription instance.
-        timeout (int): Timeout in seconds to wait for operator to be installed.
+        timeout (int, optional): [Deprecated] Timeout in seconds used if specific timeouts are not provided.
+        install_plan_creation_timeout (int, optional): Timeout in seconds to wait for InstallPlan to be created.
+        install_plan_status_complete_timeout (int, optional): Timeout in seconds to wait for operator to be installed
     """
-    install_plan = wait_for_install_plan_from_subscription(admin_client=admin_client, subscription=subscription)
+    if timeout is not None:
+        warnings.warn(
+            "The 'timeout' parameter is deprecated and will be removed in a future release. "
+            "Please use 'install_plan_creation_timeout' and 'install_plan_status_complete_timeout' instead.",
+            DeprecationWarning,
+        )
+    else:
+        timeout = TIMEOUT_5MIN
+
+    creation_timeout = install_plan_creation_timeout or timeout
+    status_complete_timeout = install_plan_status_complete_timeout or timeout
+
+    install_plan = wait_for_install_plan_from_subscription(
+        admin_client=admin_client, subscription=subscription, timeout=creation_timeout
+    )
     # If the install plan approval strategy is set to Manual because we are installing an older version,
     # approve the InstallPlan of the target version.
     if subscription.install_plan_approval == "Manual":
         ResourceEditor(patches={install_plan: {"spec": {"approved": True}}}).update()
 
-    install_plan.wait_for_status(status=install_plan.Status.COMPLETE, timeout=timeout)
+    install_plan.wait_for_status(status=install_plan.Status.COMPLETE, timeout=status_complete_timeout)
     wait_for_csv_successful_state(
         admin_client=admin_client,
         subscription=subscription,
@@ -153,6 +174,8 @@ def install_operator(
     source: str = "",
     install_plan_approval: str = "Automatic",
     starting_csv: str = "",
+    install_plan_creation_timeout: Optional[int] = None,
+    install_plan_status_complete_timeout: Optional[int] = None,
     timeout: int = TIMEOUT_30MIN,
     operator_namespace: str = "",
     source_image: str = "",
@@ -174,7 +197,9 @@ def install_operator(
         starting_csv (str, optional): The specific CSV to start from.
         target_namespaces (list, optional): Target namespaces for the operator install process.
             If not provided, a namespace with te operator name will be created and used.
-        timeout (int): Timeout in seconds to wait for operator to be ready.
+        install_plan_creation_timeout (int, optional): Timeout in seconds to wait for InstallPlan to be created.
+        install_plan_status_complete_timeout (int, optional): Timeout in seconds to wait for InstallPlan status to be COMPLETE.
+        timeout (int, optional): [Deprecated] Timeout in seconds to wait for InstallPlan status to be COMPLETE.
         operator_namespace (str, optional): Operator namespace, if not provided, operator name will be used.
         source_image (str, optional): Source image url, If provided install operator from this CatalogSource Image.
         iib_index_image (str, optional): iib index image url, If provided install operator from iib index image.
@@ -186,6 +211,19 @@ def install_operator(
     Raises:
         ValueError: When either one of them not provided (source, source_image, iib_index_image)
     """
+
+    if timeout is not None:
+        warnings.warn(
+            "The 'timeout' parameter is deprecated and will be removed in a future release. "
+            "Please use 'install_plan_creation_timeout' and 'install_plan_status_complete_timeout' instead.",
+            DeprecationWarning,
+        )
+    else:
+        timeout = TIMEOUT_5MIN
+
+    creation_timeout = install_plan_creation_timeout or timeout
+    status_complete_timeout = install_plan_status_complete_timeout or timeout
+
     catalog_source = None
     operator_market_namespace = "openshift-marketplace"
 
@@ -254,7 +292,8 @@ def install_operator(
         wait_for_operator_install(
             admin_client=admin_client,
             subscription=subscription,
-            timeout=timeout,
+            install_plan_creation_timeout=creation_timeout,
+            install_plan_status_complete_timeout=status_complete_timeout,
         )
     except Exception as ex:
         LOGGER.error(f"{name} Install Failed. \n{ex}")
