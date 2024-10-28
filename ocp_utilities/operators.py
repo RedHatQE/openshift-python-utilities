@@ -12,7 +12,7 @@ from ocp_resources.operator import Operator
 from ocp_resources.operator_group import OperatorGroup
 from ocp_resources.resource import ResourceEditor
 from ocp_resources.subscription import Subscription
-from timeout_sampler import TimeoutExpiredError, TimeoutSampler
+from timeout_sampler import TimeoutExpiredError, TimeoutSampler, TimeoutWatch
 from ocp_resources.validating_webhook_config import ValidatingWebhookConfiguration
 from simple_logger.logger import get_logger
 from ocp_utilities.must_gather import collect_must_gather
@@ -23,6 +23,7 @@ from ocp_utilities.infra import cluster_resource, create_icsp, create_update_sec
 LOGGER = get_logger(name=__name__)
 TIMEOUT_5MIN = 5 * 60
 TIMEOUT_10MIN = 10 * 60
+TIMEOUT_15MIN = 15 * 60
 TIMEOUT_30MIN = 30 * 60
 
 
@@ -67,7 +68,7 @@ def wait_for_install_plan_from_subscription(
 
 
 def wait_for_operator_install(
-    admin_client: DynamicClient, subscription: Subscription, timeout: int = TIMEOUT_5MIN
+    admin_client: DynamicClient, subscription: Subscription, timeout: int = TIMEOUT_15MIN
 ) -> None:
     """
     Wait for the operator to be installed, including InstallPlan and CSV ready.
@@ -77,17 +78,17 @@ def wait_for_operator_install(
         subscription (Subscription): Subscription instance.
         timeout (int): Timeout in seconds to wait for operator to be installed.
     """
-    install_plan = wait_for_install_plan_from_subscription(admin_client=admin_client, subscription=subscription)
+    watch = TimeoutWatch(timeout=timeout)
+    install_plan = wait_for_install_plan_from_subscription(
+        admin_client=admin_client, subscription=subscription, timeout=watch.remaining_time()
+    )
     # If the install plan approval strategy is set to Manual because we are installing an older version,
     # approve the InstallPlan of the target version.
     if subscription.install_plan_approval == "Manual":
         ResourceEditor(patches={install_plan: {"spec": {"approved": True}}}).update()
 
-    install_plan.wait_for_status(status=install_plan.Status.COMPLETE, timeout=timeout)
-    wait_for_csv_successful_state(
-        admin_client=admin_client,
-        subscription=subscription,
-    )
+    install_plan.wait_for_status(status=install_plan.Status.COMPLETE, timeout=watch.remaining_time())
+    wait_for_csv_successful_state(admin_client=admin_client, subscription=subscription, timeout=watch.remaining_time())
 
 
 def wait_for_csv_successful_state(
