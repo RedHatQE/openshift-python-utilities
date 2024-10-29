@@ -208,8 +208,7 @@ class DynamicClassCreator:
                         )
                 except Exception as exception_:
                     LOGGER.warning(
-                        "[Data collector] failed to collect data for"
-                        f" {self.kind} {self.name}\nexception: {exception_}"
+                        f"[Data collector] failed to collect data for {self.kind} {self.name}\nexception: {exception_}"
                     )
                 super().clean_up()
 
