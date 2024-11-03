@@ -44,7 +44,7 @@ Download = "https://pypi.org/project/openshift-python-utilities/"
 "Bug Tracker" = "https://github.com/RedHatQE/openshift-python-utilities/issues"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 colorlog = "^6.7.0"
 pyyaml = "^6.0.1"
 openshift-python-wrapper-data-collector = ">=1.0.4"
