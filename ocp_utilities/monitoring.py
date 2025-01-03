@@ -144,10 +144,10 @@ class Prometheus(object):
         response = self._get_response(query=f"{self.api_v1}/targets")
         result = response.get("data", {}).get("activeTargets", [])
         for item in result:
-            if item and item["labels"]["job"] == "prometheus-k8s":
-                scrape_interval = item["scrapeInterval"]
-                if scrape_interval_match := re.match(r"\d+", scrape_interval):
-                    return int(scrape_interval_match.group())
+            if item and item.get("labels", {}).get("job") == "prometheus-k8s":
+                if scrape_interval := item.get("scrapeInterval"):
+                    if scrape_interval_match := re.match(r"\d+", scrape_interval):
+                        return int(scrape_interval_match.group())
 
         return 30
 
