@@ -1,8 +1,47 @@
+[project]
+name = "openshift-python-utilities"
+version = "6.0.4"
+description = "A utilities repository for https://github.com/RedHatQE/openshift-python-wrapper"
+authors = [
+  { name = "Meni Yakove", email = "myakove@gmail.com" },
+  { name = "Ruth Netser", email = "rnetser@gmail.com" },
+]
+requires-python = "~=3.9"
+readme = "README.md"
+license = "Apache-2.0"
+keywords = ["Openshift", "ocp"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+]
+dependencies = [
+  "colorlog>=6.7.0,<7",
+  "pyyaml>=6.0.1,<7",
+  "openshift-python-wrapper-data-collector>=1.0.4",
+  "python-simple-logger>=1.0.5",
+  "timeout-sampler>=0.0.17",
+  "openshift-python-wrapper",
+  "beautifulsoup4>=4.12.3,<5",
+  "requests>=2.31.0,<3",
+  "semver>=3.0.2,<4",
+  "pyhelper-utils>=0.0.22",
+  "deprecation>=2.1.0,<3",
+]
+
+[project.urls]
+Homepage = "https://github.com/RedHatQE/openshift-python-utilities"
+Documentation = "https://github.com/RedHatQE/openshift-python-utilities/blob/main/README.md"
+Download = "https://pypi.org/project/openshift-python-utilities/"
+"Bug Tracker" = "https://github.com/RedHatQE/openshift-python-utilities/issues"
+
 [tool.ruff]
 preview = true
 line-length = 120
 fix = true
 output-format = "grouped"
+
+[dependency-groups]
+dev = ["ipdb>=0.13.13,<0.14", "ipython"]
 
 [tool.ruff.format]
 exclude = [".git", ".venv", ".mypy_cache", ".tox", "__pycache__"]
@@ -16,51 +55,12 @@ no_implicit_optional = true
 show_error_codes = true
 warn_unused_ignores = true
 
+[tool.hatch.build.targets.sdist]
+include = ["ocp_utilities"]
+
+[tool.hatch.build.targets.wheel]
+include = ["ocp_utilities"]
+
 [build-system]
-requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]
-build-backend = "poetry_dynamic_versioning.backend"
-
-[tool.poetry]
-name = "openshift-python-utilities"
-version = "0.0.0"
-description = "A utilities repository for https://github.com/RedHatQE/openshift-python-wrapper"
-authors = ["Meni Yakove <myakove@gmail.com>", "Ruth Netser <rnetser@gmail.com>"]
-readme = "README.md"
-license = "Apache-2.0"
-packages = [{ include = "ocp_utilities" }]
-homepage = "https://github.com/RedHatQE/openshift-python-utilities"
-documentation = "https://github.com/RedHatQE/openshift-python-utilities/blob/main/README.md"
-keywords = ["Openshift", "ocp"]
-classifiers = [
-  "Programming Language :: Python :: 3",
-  "Operating System :: OS Independent",
-]
-
-[tool.poetry-dynamic-versioning.substitution]
-files = ["VERSION"]
-
-[tool.poetry.urls]
-Download = "https://pypi.org/project/openshift-python-utilities/"
-"Bug Tracker" = "https://github.com/RedHatQE/openshift-python-utilities/issues"
-
-[tool.poetry.dependencies]
-python = "^3.9"
-colorlog = "^6.7.0"
-pyyaml = "^6.0.1"
-openshift-python-wrapper-data-collector = ">=1.0.4"
-python-simple-logger = ">=1.0.5"
-timeout-sampler = ">=0.0.17"
-openshift-python-wrapper = "*"
-beautifulsoup4 = "^4.12.3"
-requests = "^2.31.0"
-semver = "^3.0.2"
-pyhelper-utils = ">=0.0.22"
-deprecation = "^2.1.0"
-
-[tool.poetry.group.dev.dependencies]
-ipdb = "^0.13.13"
-ipython = "*"
-
-[tool.poetry-dynamic-versioning]
-enable = true
-pattern = "((?P<epoch>\\d+)!)?(?P<base>\\d+(\\.\\d+)*)"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
