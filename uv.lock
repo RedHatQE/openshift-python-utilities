@@ -633,7 +633,7 @@ wheels = [
 
 [[package]]
 name = "openshift-python-utilities"
-version = "6.0.4"
+version = "6.0.5"
 source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },
