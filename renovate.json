@@ -1,1 +1,18 @@
-{"$schema": "https://docs.renovatebot.com/renovate-schema.json", "packageRules": [{"matchPackagePatterns": ["colorlog", "pyyaml", "openshift-python-wrapper-data-collector", "python-simple-logger", "timeout-sampler", "openshift-python-wrapper", "pytest", "beautifulsoup4", "requests", "semver", "ipdb", "ipython"], "groupName": "poetry-deps"}]}
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    ":dependencyDashboard",
+    ":maintainLockFilesWeekly",
+    ":prHourlyLimitNone"
+  ],
+  "prConcurrentLimit": 0,
+  "lockFileMaintenance": {
+    "enabled": true
+  },
+  "packageRules": [
+    {
+      "matchPackagePatterns": ["*"],
+      "groupName": "python-deps"
+    }
+  ]
+}
