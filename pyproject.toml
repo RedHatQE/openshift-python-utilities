@@ -1,6 +1,6 @@
 [project]
 name = "openshift-python-utilities"
-version = "6.0.7"
+version = "6.0.8"
 description = "A utilities repository for https://github.com/RedHatQE/openshift-python-wrapper"
 requires-python = "~=3.9"
 readme = "README.md"
