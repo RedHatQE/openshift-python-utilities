@@ -190,7 +190,7 @@ class DynamicClassCreator:
 
                 self._set_dynamic_class_creator_label()
 
-            def clean_up(self) -> None:
+            def clean_up(self) -> bool:
                 try:
                     data_collector_dict = get_data_collector_dict()
                     if data_collector_dict:
@@ -210,7 +210,7 @@ class DynamicClassCreator:
                     LOGGER.warning(
                         f"[Data collector] failed to collect data for {self.kind} {self.name}\nexception: {exception_}"
                     )
-                super().clean_up()
+                return super().clean_up()
 
         self.created_classes[base_class] = BaseResource
         return BaseResource
