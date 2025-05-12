@@ -49,7 +49,8 @@ class Prometheus(object):
             namespace (str): Prometheus API resource namespace
             resource_name (str): Prometheus API resource name
             client (DynamicClient): Admin client resource
-            verify_ssl (bool | str): Perform SSL verification on query
+            verify_ssl (bool | str): Whether to perform SSL verification on query,
+            if so, path to a CA_BUNDLE file or directory with certificates of trusted CAs
         """
         self.namespace = namespace
         self.resource_name = resource_name
