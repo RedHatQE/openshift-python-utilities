@@ -38,7 +38,7 @@ class Prometheus(object):
         namespace: str = "openshift-monitoring",
         resource_name: str = "prometheus-k8s",
         client: DynamicClient = None,
-        verify_ssl: bool = True,
+        verify_ssl: bool | str = True,
     ) -> None:
         """
         Args:
@@ -49,7 +49,7 @@ class Prometheus(object):
             namespace (str): Prometheus API resource namespace
             resource_name (str): Prometheus API resource name
             client (DynamicClient): Admin client resource
-            verify_ssl (bool): Perform SSL verification on query
+            verify_ssl (bool | str): Perform SSL verification on query
         """
         self.namespace = namespace
         self.resource_name = resource_name
