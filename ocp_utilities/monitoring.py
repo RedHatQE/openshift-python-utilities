@@ -10,7 +10,7 @@ from ocp_resources.route import Route
 from timeout_sampler import TimeoutExpiredError, TimeoutSampler
 from simple_logger.logger import get_logger
 
-from ocp_utilities.infra import get_client
+from ocp_resources.resource import get_client
 
 
 TIMEOUT_2MIN = 2 * 60

@@ -45,13 +45,6 @@ uv sync
 
 ## Examples
 
-### Get Client
-
-```python
-from ocp_utilities.infra import get_client
-client = get_client(config_file=<path to kubeconfig>))
-```
-
 ### Install Operator
 
 ```python
