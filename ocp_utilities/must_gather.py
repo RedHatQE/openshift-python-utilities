@@ -1,11 +1,10 @@
+import os
 import shlex
 import shutil
 from pathlib import Path
-import os
 
 from pyhelper_utils.shell import run_command
 from simple_logger.logger import get_logger
-
 
 LOGGER = get_logger(name=__name__)
 

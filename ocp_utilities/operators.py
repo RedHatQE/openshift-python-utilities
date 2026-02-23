@@ -12,13 +12,12 @@ from ocp_resources.operator import Operator
 from ocp_resources.operator_group import OperatorGroup
 from ocp_resources.resource import ResourceEditor
 from ocp_resources.subscription import Subscription
-from timeout_sampler import TimeoutExpiredError, TimeoutSampler, TimeoutWatch
 from ocp_resources.validating_webhook_config import ValidatingWebhookConfiguration
 from simple_logger.logger import get_logger
-from ocp_utilities.must_gather import collect_must_gather
+from timeout_sampler import TimeoutExpiredError, TimeoutSampler, TimeoutWatch
 
 from ocp_utilities.infra import cluster_resource, create_icsp, create_update_secret
-
+from ocp_utilities.must_gather import collect_must_gather
 
 LOGGER = get_logger(name=__name__)
 TIMEOUT_5MIN = 5 * 60

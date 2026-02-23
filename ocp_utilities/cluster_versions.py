@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import functools
 import re
 from typing import Dict, List
@@ -7,8 +8,8 @@ import requests
 from bs4 import BeautifulSoup, ResultSet
 from kubernetes.dynamic import DynamicClient
 from ocp_resources.cluster_version import ClusterVersion
-from simple_logger.logger import get_logger
 from semver import Version
+from simple_logger.logger import get_logger
 
 from ocp_utilities.exceptions import ClusterVersionNotFoundError
 

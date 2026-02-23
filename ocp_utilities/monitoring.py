@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import json
 import re
 from json import JSONDecodeError
@@ -6,12 +7,10 @@ from typing import Any, Dict, List
 
 import requests
 from kubernetes.dynamic import DynamicClient
-from ocp_resources.route import Route
-from timeout_sampler import TimeoutExpiredError, TimeoutSampler
-from simple_logger.logger import get_logger
-
 from ocp_resources.resource import get_client
-
+from ocp_resources.route import Route
+from simple_logger.logger import get_logger
+from timeout_sampler import TimeoutExpiredError, TimeoutSampler
 
 TIMEOUT_2MIN = 2 * 60
 TIMEOUT_10MIN = 10 * 60
@@ -19,7 +18,7 @@ TIMEOUT_10MIN = 10 * 60
 LOGGER = get_logger(name=__name__)
 
 
-class Prometheus(object):
+class Prometheus:
     """
     For accessing Prometheus cluster metrics
 
