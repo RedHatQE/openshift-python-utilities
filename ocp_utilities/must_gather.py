@@ -1,11 +1,10 @@
+import os
 import shlex
 import shutil
 from pathlib import Path
-import os
 
 from pyhelper_utils.shell import run_command
 from simple_logger.logger import get_logger
-
 
 LOGGER = get_logger(name=__name__)
 
@@ -89,7 +88,7 @@ def collect_must_gather(
         )
         LOGGER.success("must-gather collected")
 
-    except Exception as ex:
+    except Exception as ex:  # noqa: BLE001
         LOGGER.error(
             f"Failed to run must-gather \n{ex}",
         )

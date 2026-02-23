@@ -6,7 +6,7 @@ import json
 import os
 import re
 import shlex
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import urllib3
 from deprecation import deprecated
@@ -44,7 +44,7 @@ def get_client(**kwargs: Any) -> DynamicClient:
     return get_dynamic_client(**kwargs)
 
 
-def assert_nodes_ready(nodes: List[Node]) -> None:
+def assert_nodes_ready(nodes: list[Node]) -> None:
     """
     Validates all nodes are in ready
 
@@ -60,7 +60,7 @@ def assert_nodes_ready(nodes: List[Node]) -> None:
         raise NodeNotReadyError(f"Following nodes are not in ready state: {not_ready_nodes}")
 
 
-def assert_nodes_schedulable(nodes: List[Node]) -> None:
+def assert_nodes_schedulable(nodes: list[Node]) -> None:
     """
     Validates all nodes are in schedulable state
 
@@ -76,7 +76,7 @@ def assert_nodes_schedulable(nodes: List[Node]) -> None:
         raise NodeUnschedulableError(f"Following nodes are in unscheduled state: {unschedulable_nodes}")
 
 
-def assert_pods_failed_or_pending(pods: List[Pod]) -> None:
+def assert_pods_failed_or_pending(pods: list[Pod]) -> None:
     """
     Validates all pods are not in failed nor pending phase
 
@@ -103,8 +103,8 @@ def assert_pods_failed_or_pending(pods: List[Pod]) -> None:
 
 
 def assert_nodes_in_healthy_condition(
-    nodes: List[Node],
-    healthy_node_condition_type: Optional[Dict[str, str]],
+    nodes: list[Node],
+    healthy_node_condition_type: dict[str, str] | None,
 ) -> None:
     """
     Validates nodes are in a healthy condition.
@@ -169,7 +169,7 @@ class DynamicClassCreator:
     """
 
     def __init__(self) -> None:
-        self.created_classes: Dict[Any, Any] = {}
+        self.created_classes: dict[Any, Any] = {}
 
     def __call__(self, base_class: Any) -> Any:  # TODO: return `BaseResource` class
         if base_class in self.created_classes:
@@ -206,7 +206,7 @@ class DynamicClassCreator:
                             resource_object=self,
                             collect_pod_logs=data_collector_dict.get("collect_pod_logs", False),
                         )
-                except Exception as exception_:
+                except Exception as exception_:  # noqa: BLE001
                     LOGGER.warning(
                         f"[Data collector] failed to collect data for {self.kind} {self.name}\nexception: {exception_}"
                     )
@@ -309,13 +309,13 @@ def create_icsp_from_file(icsp_file_path: str) -> ImageContentSourcePolicy:
     return icsp
 
 
-def create_icsp(icsp_name: str, repository_digest_mirrors: List[Dict[str, Any]]) -> ImageContentSourcePolicy:
+def create_icsp(icsp_name: str, repository_digest_mirrors: list[dict[str, Any]]) -> ImageContentSourcePolicy:
     icsp = ImageContentSourcePolicy(name=icsp_name, repository_digest_mirrors=repository_digest_mirrors)
     icsp.deploy()
     return icsp
 
 
-def dict_base64_encode(_dict: Dict[Any, Any]) -> str:
+def dict_base64_encode(_dict: dict[Any, Any]) -> str:
     """
     Encoding dict in base64
 
@@ -329,7 +329,7 @@ def dict_base64_encode(_dict: Dict[Any, Any]) -> str:
 
 
 def create_update_secret(
-    secret_data_dict: Dict[str, Dict[str, Dict[str, str]]],
+    secret_data_dict: dict[str, dict[str, dict[str, str]]],
     name: str,
     namespace: str,
     admin_client: DynamicClient = None,
@@ -374,7 +374,7 @@ def create_update_secret(
     return secret.deploy()
 
 
-def get_pods_by_name_prefix(client: DynamicClient, pod_prefix: str, namespace: str) -> List[Pod]:
+def get_pods_by_name_prefix(client: DynamicClient, pod_prefix: str, namespace: str) -> list[Pod]:
     """
     Args:
         client (DynamicClient): OCP Client to use.

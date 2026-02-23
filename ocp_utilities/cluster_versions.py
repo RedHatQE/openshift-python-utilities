@@ -1,14 +1,14 @@
 from __future__ import annotations
+
 import functools
 import re
-from typing import Dict, List
 
 import requests
 from bs4 import BeautifulSoup, ResultSet
 from kubernetes.dynamic import DynamicClient
 from ocp_resources.cluster_version import ClusterVersion
-from simple_logger.logger import get_logger
 from semver import Version
+from simple_logger.logger import get_logger
 
 from ocp_utilities.exceptions import ClusterVersionNotFoundError
 
@@ -25,7 +25,7 @@ def parse_openshift_release_url() -> ResultSet:
 
 
 @functools.cache
-def get_accepted_cluster_versions() -> Dict[str, Dict[str, List[str]]]:
+def get_accepted_cluster_versions() -> dict[str, dict[str, list[str]]]:
     """
     Get all accepted cluster versions from https://openshift-release.apps.ci.l2s4.p1.openshiftapps.com
 
@@ -48,7 +48,7 @@ def get_accepted_cluster_versions() -> Dict[str, Dict[str, List[str]]]:
          'rc': {'4.15': ['4.15.0-0.rc-2022-05-25-113430']},
          'fc': {'4.15': ['4.15.0-0.fc-2022-05-25-113430']}}
     """
-    _accepted_version_dict: Dict[str, Dict[str, List[str]]] = {}
+    _accepted_version_dict: dict[str, dict[str, list[str]]] = {}
     for tr in parse_openshift_release_url():
         version, status = [_tr for _tr in tr.text.splitlines() if _tr][:2]
         if status == "Accepted":

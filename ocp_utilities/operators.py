@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pprint import pformat
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from kubernetes.dynamic import DynamicClient
 from kubernetes.dynamic.exceptions import ResourceNotFoundError
@@ -12,13 +14,12 @@ from ocp_resources.operator import Operator
 from ocp_resources.operator_group import OperatorGroup
 from ocp_resources.resource import ResourceEditor
 from ocp_resources.subscription import Subscription
-from timeout_sampler import TimeoutExpiredError, TimeoutSampler, TimeoutWatch
 from ocp_resources.validating_webhook_config import ValidatingWebhookConfiguration
 from simple_logger.logger import get_logger
-from ocp_utilities.must_gather import collect_must_gather
+from timeout_sampler import TimeoutExpiredError, TimeoutSampler, TimeoutWatch
 
 from ocp_utilities.infra import cluster_resource, create_icsp, create_update_secret
-
+from ocp_utilities.must_gather import collect_must_gather
 
 LOGGER = get_logger(name=__name__)
 TIMEOUT_5MIN = 5 * 60
@@ -148,7 +149,7 @@ def get_csv_by_name(admin_client: DynamicClient, csv_name: str, namespace: str) 
 
 def install_operator(
     admin_client: DynamicClient,
-    target_namespaces: Optional[List[str]],
+    target_namespaces: list[str] | None,
     name: str,
     channel: str,
     source: str = "",
@@ -190,9 +191,8 @@ def install_operator(
     catalog_source = None
     operator_market_namespace = "openshift-marketplace"
 
-    if must_gather_output_dir:
-        if not cluster_name:
-            raise ValueError("'cluster_name' param is required for running must-gather of cluster")
+    if must_gather_output_dir and not cluster_name:
+        raise ValueError("'cluster_name' param is required for running must-gather of cluster")
     try:
         if iib_index_image:
             if not brew_token:
@@ -345,7 +345,7 @@ def create_catalog_source_for_iib_install(
 
     def _manipulate_validating_webhook_configuration(
         _validating_webhook_configuration: ValidatingWebhookConfiguration,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         _resource_name = "imagecontentsourcepolicies"
         _validating_webhook_configuration_dict = _validating_webhook_configuration.instance.to_dict()
         for webhook in _validating_webhook_configuration_dict["webhooks"]:
@@ -358,7 +358,7 @@ def create_catalog_source_for_iib_install(
 
         return _validating_webhook_configuration_dict
 
-    def _icsp(_repository_digest_mirrors: List[Dict[str, Any]]) -> None:
+    def _icsp(_repository_digest_mirrors: list[dict[str, Any]]) -> None:
         if icsp.exists:
             ResourceEditor(
                 patches={icsp: {"spec:": {"repository_digest_mirrors": _repository_digest_mirrors}}}
@@ -375,7 +375,7 @@ def create_catalog_source_for_iib_install(
     _iib_index_image = iib_index_image.replace(source_iib_registry, brew_registry)
     icsp = ImageContentSourcePolicy(name="brew-registry")
     validating_webhook_configuration = ValidatingWebhookConfiguration(name="sre-imagecontentpolicies-validation")
-    repository_digest_mirrors: List[Dict[str, Any]] = [
+    repository_digest_mirrors: list[dict[str, Any]] = [
         {
             "source": f"{source_iib_registry}/{brew_image_repo}",
             "mirrors": [f"{brew_registry}/{brew_image_repo}"],
@@ -412,13 +412,12 @@ def create_catalog_source_for_iib_install(
         admin_client=admin_client,
     )
 
-    iib_catalog_source = create_catalog_source_from_image(
+    return create_catalog_source_from_image(
         admin_client=admin_client,
         name=name,
         namespace=operator_market_namespace,
         image=_iib_index_image,
     )
-    return iib_catalog_source
 
 
 def create_catalog_source_from_image(

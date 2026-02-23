@@ -1,17 +1,16 @@
 from __future__ import annotations
+
 import json
 import re
 from json import JSONDecodeError
-from typing import Any, Dict, List
+from typing import Any
 
 import requests
 from kubernetes.dynamic import DynamicClient
-from ocp_resources.route import Route
-from timeout_sampler import TimeoutExpiredError, TimeoutSampler
-from simple_logger.logger import get_logger
-
 from ocp_resources.resource import get_client
-
+from ocp_resources.route import Route
+from simple_logger.logger import get_logger
+from timeout_sampler import TimeoutExpiredError, TimeoutSampler
 
 TIMEOUT_2MIN = 2 * 60
 TIMEOUT_10MIN = 10 * 60
@@ -19,7 +18,7 @@ TIMEOUT_10MIN = 10 * 60
 LOGGER = get_logger(name=__name__)
 
 
-class Prometheus(object):
+class Prometheus:
     """
     For accessing Prometheus cluster metrics
 
@@ -69,7 +68,7 @@ class Prometheus(object):
         route = Route(namespace=self.namespace, name=self.resource_name, client=self.client).instance.spec.host
         return f"https://{route}"
 
-    def _get_response(self, query: str) -> Dict[str, Any]:
+    def _get_response(self, query: str) -> dict[str, Any]:
         response = requests.get(f"{self.api_url}{query}", headers=self.headers, verify=self.verify_ssl)
 
         try:
@@ -81,7 +80,7 @@ class Prometheus(object):
             )
             raise
 
-    def query(self, query: str) -> Dict[str, Any]:
+    def query(self, query: str) -> dict[str, Any]:
         """
         get the prometheus query result
 
@@ -93,7 +92,7 @@ class Prometheus(object):
         """
         return self._get_response(query=f"{self.api_v1}/query?query={query}")
 
-    def get_all_alerts_by_alert_name(self, alert_name: str) -> List[Dict[str, Any]]:
+    def get_all_alerts_by_alert_name(self, alert_name: str) -> list[dict[str, Any]]:
         """
         Get alert by alert name if it's an active alert
 
@@ -107,13 +106,9 @@ class Prometheus(object):
              list: list containing alert metrics
         """
         alerts = self.alerts()
-        alert_list = []
-        for alert in alerts["data"]["alerts"]:
-            if alert["labels"]["alertname"] == alert_name:
-                alert_list.append(alert)
-        return alert_list
+        return [alert for alert in alerts["data"]["alerts"] if alert["labels"]["alertname"] == alert_name]
 
-    def get_firing_alerts(self, alert_name: str) -> List[Dict[str, Any]]:
+    def get_firing_alerts(self, alert_name: str) -> list[dict[str, Any]]:
         """
         get all the firing alerts from list of active alerts
         """
@@ -145,14 +140,17 @@ class Prometheus(object):
         response = self._get_response(query=f"{self.api_v1}/targets")
         result = response.get("data", {}).get("activeTargets", [])
         for item in result:
-            if item and item.get("labels", {}).get("job") == "prometheus-k8s":
-                if scrape_interval := item.get("scrapeInterval"):
-                    if scrape_interval_match := re.match(r"\d+", scrape_interval):
-                        return int(scrape_interval_match.group())
+            if (
+                item
+                and item.get("labels", {}).get("job") == "prometheus-k8s"
+                and (scrape_interval := item.get("scrapeInterval"))
+                and (scrape_interval_match := re.match(r"\d+", scrape_interval))
+            ):
+                return int(scrape_interval_match.group())
 
         return 30
 
-    def query_sampler(self, query: str, timeout: int = TIMEOUT_2MIN) -> List[Any]:
+    def query_sampler(self, query: str, timeout: int = TIMEOUT_2MIN) -> list[Any]:
         """
         Sample output for query function
 
@@ -183,13 +181,13 @@ class Prometheus(object):
 
         return []
 
-    def alerts(self) -> Dict[str, Any]:
+    def alerts(self) -> dict[str, Any]:
         """
         get all the active alerts
         """
         return self._get_response(query=f"{self.api_v1}/alerts")
 
-    def get_alerts_by_state(self, alert_name: str, state: str = "firing") -> List[Dict[str, Any]]:
+    def get_alerts_by_state(self, alert_name: str, state: str = "firing") -> list[dict[str, Any]]:
         """
         get all the alerts from list of active alerts according the state
         """
@@ -198,7 +196,7 @@ class Prometheus(object):
 
     def wait_for_alert_by_state_sampler(
         self, alert_name: str, timeout: int = TIMEOUT_10MIN, state: str = "firing"
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Sample output for an alert if found in the state provided in the args.
 
