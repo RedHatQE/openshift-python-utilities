@@ -88,7 +88,7 @@ def collect_must_gather(
         )
         LOGGER.success("must-gather collected")
 
-    except Exception as ex:
+    except Exception as ex:  # noqa: BLE001
         LOGGER.error(
             f"Failed to run must-gather \n{ex}",
         )
