@@ -307,7 +307,7 @@ def uninstall_operator(
         for _operator in Operator.get(dyn_client=admin_client):
             if _operator.name.startswith(name):
                 # operator name convention is <name>.<namespace>
-                namespace = operator_namespace or name.split(".")[-1]
+                namespace = operator_namespace or name.rsplit(".", maxsplit=1)[-1]
                 ns = Namespace(client=admin_client, name=namespace)
                 if ns.exists:
                     ns.clean_up()
@@ -370,7 +370,7 @@ def create_catalog_source_for_iib_install(
             )
 
     brew_registry = "brew.registry.redhat.io"
-    source_iib_registry = iib_index_image.split("/")[0]
+    source_iib_registry = iib_index_image.split("/", maxsplit=1)[0]
     brew_image_repo = iib_index_image.split("/")[1]
     _iib_index_image = iib_index_image.replace(source_iib_registry, brew_registry)
     icsp = ImageContentSourcePolicy(name="brew-registry")
